@@ -21,10 +21,15 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
 
+  const apiUrl = import.meta.env.VITE_API_URL?.trim();
+  const backendUrl = import.meta.env.VITE_SOCKET_URL?.trim()
+    || (apiUrl
+      ? apiUrl.replace(/\/api\/?$/, '')
+      : 'http://localhost:3000');
+
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
-      const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
       const newSocket = io(backendUrl, {
         auth: { token },
         transports: ['websocket', 'polling'],

@@ -2,8 +2,16 @@
 import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'axios';
 import toast from 'react-hot-toast';
 
+const rawApiUrl = import.meta.env.VITE_API_URL?.trim();
+
+const apiBaseUrl = rawApiUrl
+  ? rawApiUrl.replace(/\/$/, '').endsWith('/api')
+    ? rawApiUrl.replace(/\/$/, '')
+    : `${rawApiUrl.replace(/\/$/, '')}/api`
+  : '/api';
+
 const api: AxiosInstance = axios.create({
-  baseURL: '/api',
+  baseURL: apiBaseUrl,
   headers: {
     'Content-Type': 'application/json',
   },
