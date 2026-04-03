@@ -101,7 +101,7 @@ export const NotificationDropdown: React.FC = () => {
                     key={notification.id}
                     onClick={() => handleNotificationClick(notification)}
                     className={`w-full text-left p-4 hover:bg-gray-50 transition ${
-                      !notification.read ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
+                      !notification.read ? 'bg-amber-50 border-l-4 border-l-amber-400' : ''
                     }`}
                   >
                     <div className="flex items-start gap-3">
@@ -118,7 +118,7 @@ export const NotificationDropdown: React.FC = () => {
                         </p>
                       </div>
                       {!notification.read && (
-                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        <div className="w-2 h-2 bg-amber-400 rounded-full"></div>
                       )}
                     </div>
                   </button>

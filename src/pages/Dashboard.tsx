@@ -83,13 +83,10 @@ const Sidebar: React.FC<{
         navigate('/jobs');
       }
     } else if (item.key === 'applications') {
-      setActiveTab('dashboard');
       setShowApplicationsModal(true);
     } else if (item.key === 'messages') {
-      setActiveTab('messages');
       setShowMessagesModal(true);
     } else if (item.key === 'profile') {
-      setActiveTab('profile');
       setShowProfileModal(true);
     }
   };
@@ -399,9 +396,9 @@ const MessagesModal: React.FC<{ isOpen: boolean; onClose: () => void; initialApp
                   }}
                   className={`p-4 border-b cursor-pointer hover:bg-white transition-colors ${
                     selectedConversation?.application.id === conversation.application.id
-                      ? 'bg-white border-l-4 border-l-orange-600'
+                      ? 'bg-white border-l-4 border-l-amber-500'
                       : conversation.isUnread
-                      ? 'bg-blue-50 border-l-4 border-l-blue-500'
+                      ? 'bg-amber-50 border-l-4 border-l-amber-400'
                       : ''
                   }`}
                 >
@@ -411,7 +408,7 @@ const MessagesModal: React.FC<{ isOpen: boolean; onClose: () => void; initialApp
                         {conversation.otherParty.email.charAt(0).toUpperCase()}
                       </div>
                       {conversation.isUnread && (
-                        <span className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 border-2 border-white rounded-full" />
+                        <span className="absolute -top-1 -right-1 w-3 h-3 bg-amber-400 border-2 border-white rounded-full" />
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -423,7 +420,7 @@ const MessagesModal: React.FC<{ isOpen: boolean; onClose: () => void; initialApp
                         </p>
                         <div className="flex items-center space-x-1 flex-shrink-0">
                           {conversation.unreadCount > 0 && (
-                            <span className="bg-blue-500 text-white text-xs rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 font-semibold">
+                            <span className="bg-amber-400 text-white text-xs rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 font-semibold">
                               {conversation.unreadCount > 9 ? '9+' : conversation.unreadCount}
                             </span>
                           )}
@@ -951,7 +948,7 @@ const JobDetailsModal: React.FC<{ job: Job; applications: Application[]; onClose
                         <button
                           onClick={() => onUpdateStatus(app.id, 'IN_PROGRESS')}
                           disabled={loadingUpdate === app.id}
-                          className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 disabled:opacity-50"
+                          className="px-3 py-1 bg-primary-600 text-white rounded text-sm hover:bg-primary-700 disabled:opacity-50"
                         >
                           {loadingUpdate === app.id ? 'Loading...' : 'Start Work'}
                         </button>
@@ -1306,10 +1303,10 @@ export const Dashboard: React.FC = () => {
   useEffect(() => {
     if (activeTab === 'messages') {
       setShowMessagesModal(true);
-      setActiveTab('dashboard');
+      setActiveTab('overview');
     } else if (activeTab === 'profile') {
       setShowProfileModal(true);
-      setActiveTab('dashboard');
+      setActiveTab('overview');
     }
   }, [activeTab]);
 
@@ -1584,7 +1581,7 @@ export const Dashboard: React.FC = () => {
                           <BarChart3 className="h-5 w-5 text-gray-500" />
                           <span className="text-sm text-gray-600">Applications</span>
                         </div>
-                        <span className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded">Received</span>
+                        <span className="text-xs px-2 py-1 bg-amber-100 text-amber-700 rounded">Received</span>
                       </div>
                       <div className="flex items-baseline gap-2">
                         <span className="text-2xl font-bold text-gray-900">{String(jobs.reduce((sum, j) => sum + (j._count?.applications || 0), 0)).padStart(2, '0')}</span>
@@ -1663,43 +1660,8 @@ export const Dashboard: React.FC = () => {
             {activeTab === 'jobs' && (
               <div>
                 <h2 className="text-lg font-semibold text-gray-900 mb-6">Jobs & Applications Management</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {jobs.map((job) => (
-                    <div 
-                      key={job.id} 
-                      className="bg-white rounded-lg p-6 shadow-sm border border-gray-200 hover:shadow-md transition cursor-pointer"
-                      onClick={() => handleJobClick(job)}
-                    >
-                      <div className="flex justify-between items-start mb-4">
-                        <div>
-                          <h3 className="font-semibold text-gray-900 mb-1">{job.title}</h3>
-                          <p className="text-sm text-gray-600">Created {new Date(job.createdAt).toLocaleDateString()}</p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <StatusBadge status={job.status} />
-                          <Eye className="h-4 w-4 text-gray-400" />
-                        </div>
-                      </div>
-                      
-                      <p className="text-sm text-gray-600 mb-4 line-clamp-2">{job.description}</p>
-                      
-                      <div className="space-y-2">
-                        <div className="flex justify-between">
-                          <span className="text-sm text-gray-600">Budget</span>
-                          <span className="text-sm font-medium">${job.budget}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-sm text-gray-600">Applications</span>
-                          <span className={`text-sm font-medium ${(job._count?.applications || 0) > 0 ? 'text-blue-600' : 'text-gray-500'}`}>
-                            {job._count?.applications || 0}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
 
-                {jobs.length === 0 && (
+                {jobs.length === 0 ? (
                   <div className="text-center py-12">
                     <Briefcase className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                     <p className="text-gray-500 mb-4">No jobs posted yet</p>
@@ -1709,6 +1671,72 @@ export const Dashboard: React.FC = () => {
                     >
                       Create Your First Job
                     </button>
+                  </div>
+                ) : (
+                  <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">#</th>
+                            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Job Title</th>
+                            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Tags</th>
+                            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Budget</th>
+                            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Applications</th>
+                            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Created</th>
+                            <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Action</th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-100">
+                          {jobs.map((job, index) => (
+                            <tr
+                              key={job.id}
+                              className="hover:bg-orange-50 transition-colors cursor-pointer"
+                              onClick={() => handleJobClick(job)}
+                            >
+                              <td className="px-6 py-4 text-sm text-gray-400">{index + 1}</td>
+                              <td className="px-6 py-4">
+                                <p className="text-sm font-medium text-gray-900">{job.title}</p>
+                                <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">{job.description}</p>
+                              </td>
+                              <td className="px-6 py-4">
+                                <div className="flex flex-wrap gap-1">
+                                  {(job.tags ?? []).slice(0, 3).map((t) => (
+                                    <span key={t.id} className="inline-block px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full">
+                                      {t.tag}
+                                    </span>
+                                  ))}
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                                ${job.budget.toLocaleString()}
+                              </td>
+                              <td className="px-6 py-4">
+                                <StatusBadge status={job.status} />
+                              </td>
+                              <td className="px-6 py-4">
+                                <span className={`text-sm font-semibold ${(job._count?.applications || 0) > 0 ? 'text-primary-600' : 'text-gray-400'}`}>
+                                  {job._count?.applications || 0}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 text-sm text-gray-500">
+                                {new Date(job.createdAt).toLocaleDateString()}
+                              </td>
+                              <td className="px-6 py-4 text-right">
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); handleJobClick(job); }}
+                                  className="inline-flex items-center gap-1 text-xs text-orange-600 hover:text-orange-800 font-medium"
+                                >
+                                  <Eye className="h-4 w-4" />
+                                  View
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 )}
               </div>
@@ -1727,7 +1755,7 @@ export const Dashboard: React.FC = () => {
                       <Briefcase className="h-5 w-5 text-gray-500" />
                       <span className="text-sm text-gray-600">Applications</span>
                     </div>
-                    <span className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded">Total</span>
+                    <span className="text-xs px-2 py-1 bg-amber-100 text-amber-700 rounded">Total</span>
                   </div>
                   <div className="flex items-baseline gap-2">
                     <span className="text-2xl font-bold text-gray-900">{String(stats.total).padStart(2, '0')}</span>
@@ -1768,7 +1796,7 @@ export const Dashboard: React.FC = () => {
                       <MessageSquare className="h-5 w-5 text-blue-500" />
                       <span className="text-sm text-gray-600">In Progress</span>
                     </div>
-                    <span className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded">Working</span>
+                    <span className="text-xs px-2 py-1 bg-amber-100 text-amber-700 rounded">Working</span>
                   </div>
                   <div className="flex items-baseline gap-2">
                     <span className="text-2xl font-bold text-gray-900">{String(stats.inProgress).padStart(2, '0')}</span>

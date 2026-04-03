@@ -83,7 +83,7 @@ export const Messages: React.FC = () => {
                       {conv.application.job.title}
                     </h3>
                     {conv.isUnread && (
-                      <span className="flex-shrink-0 w-2 h-2 mt-1.5 rounded-full bg-blue-500" />
+                      <span className="flex-shrink-0 w-2 h-2 mt-1.5 rounded-full bg-amber-400" />
                     )}
                   </div>
                   <p className="text-sm text-gray-500 mt-1">

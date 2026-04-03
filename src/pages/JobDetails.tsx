@@ -109,7 +109,7 @@ export const JobDetails: React.FC = () => {
   const getNextStatusButton = (app: Application) => {
     const transitions: Record<string, { label: string; status: Application['status']; color: string }> = {
       PENDING: { label: 'Accept', status: 'MATCHED', color: 'bg-green-600 hover:bg-green-700' },
-      MATCHED: { label: 'Start Work', status: 'IN_PROGRESS', color: 'bg-blue-600 hover:bg-blue-700' },
+      MATCHED: { label: 'Start Work', status: 'IN_PROGRESS', color: 'bg-primary-600 hover:bg-primary-700' },
       IN_PROGRESS: { label: 'Complete', status: 'COMPLETED', color: 'bg-purple-600 hover:bg-purple-700' },
     };
     return transitions[app.status];
@@ -196,7 +196,7 @@ export const JobDetails: React.FC = () => {
               {job.status !== 'IN_PROGRESS' && (
                 <button
                   onClick={() => handleUpdateJobStatus('IN_PROGRESS')}
-                  className="px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition"
+                  className="px-4 py-2 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition"
                 >
                   🔵 Mark as In Progress
                 </button>
