@@ -25,7 +25,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const backendUrl = import.meta.env.VITE_SOCKET_URL?.trim()
     || (apiUrl
       ? apiUrl.replace(/\/api\/?$/, '')
-      : 'http://localhost:3000');
+      : 'http://localhost:3010');
 
   useEffect(() => {
     const token = localStorage.getItem('token');

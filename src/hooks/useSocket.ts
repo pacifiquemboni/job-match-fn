@@ -39,13 +39,18 @@ export const useSocketMessages = (applicationId: string) => {
     socket.emit('join-room', applicationId);
 
     const handleNewMessage = (message: Message) => {
-      setMessages((prev) => [...prev, message]);
+      setMessages((prev) => {
+        // deduplicate by message id in case of re-renders
+        if (prev.some((m) => m.id === message.id)) return prev;
+        return [...prev, message];
+      });
     };
 
     socket.on('new-message', handleNewMessage);
 
     return () => {
       socket.off('new-message', handleNewMessage);
+      socket.emit('leave-room', applicationId);
     };
   }, [socket, isConnected, applicationId]);
 
