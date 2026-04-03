@@ -38,7 +38,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const { socket, isConnected } = useSocket();
   const { user } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [, setIsLoading] = useState(false);
 
   // Fetch notifications from database when user logs in
   const refreshNotifications = async () => {

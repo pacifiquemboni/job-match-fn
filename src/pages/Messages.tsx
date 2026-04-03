@@ -4,8 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useSocketMessages } from '../hooks/useSocket';
 import { useAuth } from '../context/AuthContext';
 import { applicationsService } from '../services/applications';
-import { messagesService } from '../services/messages';
-import { Application, Message } from '../types';
+import { Application } from '../types';
 import { ChatRoom } from '../components/messages/ChatRoom';
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
 import { ArrowLeft } from 'lucide-react';
@@ -16,7 +15,7 @@ export const Messages: React.FC = () => {
   const [applications, setApplications] = useState<Application[]>([]);
   const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
   const [applicationsLoading, setApplicationsLoading] = useState(true);
-  const { messages, sendMessage, loading: messagesLoading } = useSocketMessages(selectedApplication?.id || '');
+  const { messages, sendMessage } = useSocketMessages(selectedApplication?.id || '');
 
   useEffect(() => {
     loadApplications();

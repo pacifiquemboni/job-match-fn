@@ -18,14 +18,9 @@ import {
   Phone,
   BarChart3,
   Calendar,
-  Filter,
   MoreHorizontal,
-  Wifi,
-  WifiOff,
   X,
   Eye,
-  Edit,
-  Trash2,
   Menu,
   ChevronLeft,
   User,
@@ -40,12 +35,15 @@ const Sidebar: React.FC<{
   setActiveTab: (tab: string) => void;
   isExpanded: boolean;
   setIsExpanded: (expanded: boolean) => void;
-}> = ({ userRole, activeTab, setActiveTab, isExpanded, setIsExpanded }) => {
-  const { user, logout } = useAuth();
+  setShowApplicationsModal: (show: boolean) => void;
+  setShowMessagesModal: (show: boolean) => void;
+  setShowProfileModal: (show: boolean) => void;
+}> = ({ userRole, activeTab, setActiveTab, isExpanded, setIsExpanded, setShowApplicationsModal, setShowMessagesModal, setShowProfileModal }) => {
+  const { user } = useAuth();
   const { socket } = useSocket();
   const navigate = useNavigate();
   const [unreadMessageCount, setUnreadMessageCount] = useState(0);
-  const [showUserDropdown, setShowUserDropdown] = useState(false);
+  // const [showUserDropdown, setShowUserDropdown] = useState(false);
   
   const clientMenuItems = [
     { icon: Home, label: 'Dashboard', key: 'dashboard', active: true },
@@ -155,14 +153,7 @@ const Sidebar: React.FC<{
     }
   }, [socket, user]);
 
-  const getInitials = (email: string) => {
-    return email.charAt(0).toUpperCase();
-  };
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
 
   return (
     <div className={`bg-gray-900 min-h-screen flex flex-col transition-all duration-300 ${
@@ -1260,7 +1251,7 @@ export const Dashboard: React.FC = () => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
-  const [loadingApplications, setLoadingApplications] = useState(false);
+  const [, setLoadingApplications] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
   
   // Mobile-first: collapsed by default, use effect to set desktop state
@@ -1482,9 +1473,12 @@ export const Dashboard: React.FC = () => {
       <Sidebar 
         userRole={user?.role || ''} 
         activeTab={activeTab} 
-        setActiveTab={setActiveTab}
+        setActiveTab={(tab: string) => setActiveTab(tab as 'dashboard' | 'overview' | 'jobs' | 'messages' | 'profile')}
         isExpanded={isExpanded}
         setIsExpanded={setIsExpanded}
+        setShowApplicationsModal={setShowApplicationsModal}
+        setShowMessagesModal={setShowMessagesModal}
+        setShowProfileModal={setShowProfileModal}
       />
       
       {/* Main Content */}

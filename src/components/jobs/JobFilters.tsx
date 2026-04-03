@@ -19,7 +19,7 @@ export const JobFilters: React.FC<JobFiltersProps> = ({ onFilterChange }) => {
   const [status, setStatus] = useState<Job['status'] | ''>('');
   const [minBudget, setMinBudget] = useState('');
   const [maxBudget, setMaxBudget] = useState('');
-  const [showAdvanced, setShowAdvanced] = useState(false);
+  // const [showAdvanced, setShowAdvanced] = useState(false);
   
   const debouncedTags = useDebounce(tags, 500);
   const debouncedMinBudget = useDebounce(minBudget, 500);
