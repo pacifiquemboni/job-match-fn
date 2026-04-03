@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
 import { jobsService } from '../services/jobs';
 import { applicationsService } from '../services/applications';
+import { messagesService } from '../services/messages';
 import { Job, Application } from '../types';
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
 import { NotificationDropdown } from '../components/common/NotificationDropdown';
@@ -98,32 +99,9 @@ const Sidebar: React.FC<{
     if (!user) return;
     const fetchUnreadCount = async () => {
       try {
-        const res = await fetch('/api/messages/conversations/list', {
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-        });
-        const data = await res.json();
-        if (data.status === 'success') {
-          const total = (data.data as any[]).reduce((sum: number, c: any) => sum + (c.unreadCount ?? 0), 0);
-          setUnreadMessageCount(total);
-        }
-      } catch {}
-    };
-    fetchUnreadCount();
-  }, [user]);
-
-  // Fetch initial unread count from API (Sidebar)
-  useEffect(() => {
-    if (!user) return;
-    const fetchUnreadCount = async () => {
-      try {
-        const res = await fetch('/api/messages/conversations/list', {
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-        });
-        const data = await res.json();
-        if (data.status === 'success') {
-          const total = (data.data as any[]).reduce((sum: number, c: any) => sum + (c.unreadCount ?? 0), 0);
-          setUnreadMessageCount(total);
-        }
+        const conversations = await messagesService.getConversations();
+        const total = conversations.reduce((sum, c) => sum + (c.unreadCount ?? 0), 0);
+        setUnreadMessageCount(total);
       } catch {}
     };
     fetchUnreadCount();
@@ -317,15 +295,8 @@ const MessagesModal: React.FC<{ isOpen: boolean; onClose: () => void; initialApp
   const loadConversations = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('/api/messages/conversations/list', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      const data = await response.json();
-      if (data.status === 'success') {
-        setConversations(data.data);
-      }
+      const data = await messagesService.getConversations();
+      setConversations(data);
     } catch (error) {
       console.error('Error loading conversations:', error);
     } finally {
@@ -336,15 +307,8 @@ const MessagesModal: React.FC<{ isOpen: boolean; onClose: () => void; initialApp
   const loadMessages = async (applicationId: string) => {
     try {
       setIsLoadingMessages(true);
-      const response = await fetch(`/api/messages/${applicationId}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      const data = await response.json();
-      if (data.status === 'success') {
-        setMessages(data.data);
-      }
+      const data = await messagesService.getMessages(applicationId);
+      setMessages(data);
     } catch (error) {
       console.error('Error loading messages:', error);
     } finally {
@@ -353,38 +317,16 @@ const MessagesModal: React.FC<{ isOpen: boolean; onClose: () => void; initialApp
   };
 
   const sendMessage = async () => {
-    console.log('Send message called', { newMessage: newMessage.trim(), selectedConversation });
-    if (!newMessage.trim() || !selectedConversation) {
-      console.log('Early return - missing message or conversation');
-      return;
-    }
+    if (!newMessage.trim() || !selectedConversation) return;
 
     try {
-      console.log('Making POST request to /api/messages');
-      const response = await fetch('/api/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({
-          applicationId: selectedConversation.application.id,
-          content: newMessage.trim()
-        })
-      });
-
-      console.log('Response status:', response.status, response.statusText);
-      const data = await response.json();
-      console.log('Send message response:', data);
-      
-      if (data.status === 'success') {
-        setMessages(prev => [...prev, data.data]);
-        setNewMessage('');
-        loadConversations(); // Refresh conversations to update last message
-      } else {
-        console.error('Send message failed:', data);
-        toast.error(`Failed to send message: ${data.message || 'Unknown error'}`);
-      }
+      const message = await messagesService.sendMessage(
+        selectedConversation.application.id,
+        newMessage.trim()
+      );
+      setMessages(prev => [...prev, message]);
+      setNewMessage('');
+      loadConversations();
     } catch (error) {
       console.error('Error sending message:', error);
       toast.error('Error sending message. Please try again.');
