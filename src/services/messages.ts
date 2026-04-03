@@ -27,6 +27,8 @@ export interface Conversation {
   };
   lastMessage: Message | null;
   messageCount: number;
+  unreadCount: number;
+  isUnread: boolean;
   otherParty: {
     id: string;
     email: string;

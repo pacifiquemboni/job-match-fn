@@ -3,8 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSocketMessages } from '../hooks/useSocket';
 import { useAuth } from '../context/AuthContext';
-import { applicationsService } from '../services/applications';
-import { Application } from '../types';
+import { messagesService, Conversation } from '../services/messages';
 import { ChatRoom } from '../components/messages/ChatRoom';
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
 import { ArrowLeft } from 'lucide-react';
@@ -12,49 +11,30 @@ import { ArrowLeft } from 'lucide-react';
 export const Messages: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [applications, setApplications] = useState<Application[]>([]);
-  const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
-  const [applicationsLoading, setApplicationsLoading] = useState(true);
-  const { messages, sendMessage } = useSocketMessages(selectedApplication?.id || '');
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
+  const [conversationsLoading, setConversationsLoading] = useState(true);
+  const { messages, sendMessage } = useSocketMessages(selectedConversation?.application.id || '');
 
   useEffect(() => {
-    loadApplications();
+    if (user) loadConversations();
   }, [user]);
 
-  const loadApplications = async () => {
+  const loadConversations = async () => {
     try {
-      // Use different endpoint based on user role
-      const data = user?.role === 'CLIENT' 
-        ? await applicationsService.getClientApplications()
-        : await applicationsService.getMyApplications();
-      
-      const activeApplications = data.filter(
-        (app) => app.status === 'MATCHED' || app.status === 'IN_PROGRESS'
-      );
-      setApplications(activeApplications);
-      if (activeApplications.length > 0 && !selectedApplication) {
-        setSelectedApplication(activeApplications[0]);
+      const data = await messagesService.getConversations();
+      setConversations(data);
+      if (data.length > 0 && !selectedConversation) {
+        setSelectedConversation(data[0]);
       }
     } catch (error) {
-      console.error('Failed to load applications:', error);
+      console.error('Failed to load conversations:', error);
     } finally {
-      setApplicationsLoading(false);
+      setConversationsLoading(false);
     }
   };
 
-  const handleSendMessage = (content: string) => {
-    sendMessage(content);
-  };
-
-  // Get the contact info based on role
-  const getContactInfo = (app: Application) => {
-    if (user?.role === 'CLIENT') {
-      return app.worker?.email || 'Worker';
-    }
-    return app.job?.client.email || 'Client';
-  };
-
-  if (applicationsLoading) {
+  if (conversationsLoading) {
     return <LoadingSpinner />;
   }
 
@@ -72,46 +52,63 @@ export const Messages: React.FC = () => {
           <h1 className="text-3xl font-bold text-gray-900">Messages</h1>
         </div>
       </div>
-      
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Conversation List */}
         <div className="bg-white rounded-lg shadow-md overflow-hidden">
           <div className="p-4 border-b border-gray-200">
-            <h2 className="font-semibold text-gray-900">Active Conversations</h2>
+            <h2 className="font-semibold text-gray-900">Conversations</h2>
           </div>
           <div className="divide-y divide-gray-200">
-            {applications.length === 0 ? (
+            {conversations.length === 0 ? (
               <div className="p-4 text-center text-gray-500">
-                No active conversations
+                No conversations yet.<br />
+                <span className="text-xs">
+                  Conversations appear once an application is accepted.
+                </span>
               </div>
             ) : (
-              applications.map((app) => (
+              conversations.map((conv) => (
                 <button
-                  key={app.id}
-                  onClick={() => setSelectedApplication(app)}
+                  key={conv.application.id}
+                  onClick={() => setSelectedConversation(conv)}
                   className={`w-full text-left p-4 hover:bg-gray-50 transition ${
-                    selectedApplication?.id === app.id ? 'bg-primary-50' : ''
+                    selectedConversation?.application.id === conv.application.id
+                      ? 'bg-primary-50'
+                      : ''
                   }`}
                 >
-                  <h3 className="font-medium text-gray-900">{app.job?.title}</h3>
+                  <div className="flex items-start justify-between gap-2">
+                    <h3 className="font-medium text-gray-900 truncate">
+                      {conv.application.job.title}
+                    </h3>
+                    {conv.isUnread && (
+                      <span className="flex-shrink-0 w-2 h-2 mt-1.5 rounded-full bg-blue-500" />
+                    )}
+                  </div>
                   <p className="text-sm text-gray-500 mt-1">
-                    {getContactInfo(app)}
+                    {conv.otherParty?.email || 'Unknown'}
                   </p>
+                  {conv.lastMessage && (
+                    <p className="text-xs text-gray-400 mt-1 truncate">
+                      {conv.lastMessage.content}
+                    </p>
+                  )}
                   <span className="inline-block mt-2 px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">
-                    {app.status}
+                    {conv.application.status}
                   </span>
                 </button>
               ))
             )}
           </div>
         </div>
-        
+
         {/* Chat Room */}
         <div className="lg:col-span-2">
-          {selectedApplication ? (
+          {selectedConversation ? (
             <ChatRoom
               messages={messages}
-              onSendMessage={handleSendMessage}
+              onSendMessage={sendMessage}
             />
           ) : (
             <div className="bg-white rounded-lg shadow-md p-8 text-center text-gray-500">
