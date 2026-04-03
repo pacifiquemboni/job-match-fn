@@ -21,6 +21,7 @@ function AppContent() {
   const { user, isLoading } = useAuth();
   const location = useLocation();
   const isDashboard = location.pathname === '/dashboard';
+  const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
 
   if (isLoading) {
     return (
@@ -32,7 +33,7 @@ function AppContent() {
 
   return (
     <>
-      {!isDashboard && <Navbar />}
+      {!isDashboard && !isAuthPage && <Navbar />}
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={!user ? <Login /> : <Navigate to="/" />} />

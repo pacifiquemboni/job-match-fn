@@ -1192,6 +1192,12 @@ export const Dashboard: React.FC = () => {
   }, []);
   const [, setLoadingApplications] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
+
+  // Pagination
+  const JOBS_PER_PAGE = 10;
+  const APPS_PER_PAGE = 6;
+  const [jobsPage, setJobsPage] = useState(1);
+  const [appsPage, setAppsPage] = useState(1);
   
   // Mobile-first: collapsed by default, use effect to set desktop state
   const [isExpanded, setIsExpanded] = useState(false);
@@ -1672,73 +1678,128 @@ export const Dashboard: React.FC = () => {
                       Create Your First Job
                     </button>
                   </div>
-                ) : (
-                  <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-                    <div className="overflow-x-auto">
-                      <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-                          <tr>
-                            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">#</th>
-                            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Job Title</th>
-                            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Tags</th>
-                            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Budget</th>
-                            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-                            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Applications</th>
-                            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Created</th>
-                            <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Action</th>
-                          </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-100">
-                          {jobs.map((job, index) => (
-                            <tr
-                              key={job.id}
-                              className="hover:bg-orange-50 transition-colors cursor-pointer"
-                              onClick={() => handleJobClick(job)}
-                            >
-                              <td className="px-6 py-4 text-sm text-gray-400">{index + 1}</td>
-                              <td className="px-6 py-4">
-                                <p className="text-sm font-medium text-gray-900">{job.title}</p>
-                                <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">{job.description}</p>
-                              </td>
-                              <td className="px-6 py-4">
-                                <div className="flex flex-wrap gap-1">
-                                  {(job.tags ?? []).slice(0, 3).map((t) => (
-                                    <span key={t.id} className="inline-block px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full">
-                                      {t.tag}
-                                    </span>
-                                  ))}
-                                </div>
-                              </td>
-                              <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                                ${job.budget.toLocaleString()}
-                              </td>
-                              <td className="px-6 py-4">
-                                <StatusBadge status={job.status} />
-                              </td>
-                              <td className="px-6 py-4">
-                                <span className={`text-sm font-semibold ${(job._count?.applications || 0) > 0 ? 'text-primary-600' : 'text-gray-400'}`}>
-                                  {job._count?.applications || 0}
-                                </span>
-                              </td>
-                              <td className="px-6 py-4 text-sm text-gray-500">
-                                {new Date(job.createdAt).toLocaleDateString()}
-                              </td>
-                              <td className="px-6 py-4 text-right">
-                                <button
-                                  onClick={(e) => { e.stopPropagation(); handleJobClick(job); }}
-                                  className="inline-flex items-center gap-1 text-xs text-orange-600 hover:text-orange-800 font-medium"
+                ) : (() => {
+                  const totalJobPages = Math.ceil(jobs.length / JOBS_PER_PAGE);
+                  const pagedJobs = jobs.slice((jobsPage - 1) * JOBS_PER_PAGE, jobsPage * JOBS_PER_PAGE);
+                  return (
+                    <>
+                      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                        <div className="overflow-x-auto">
+                          <table className="min-w-full divide-y divide-gray-200">
+                            <thead className="bg-gray-50">
+                              <tr>
+                                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">#</th>
+                                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Job Title</th>
+                                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Tags</th>
+                                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Budget</th>
+                                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Applications</th>
+                                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Created</th>
+                                <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Action</th>
+                              </tr>
+                            </thead>
+                            <tbody className="bg-white divide-y divide-gray-100">
+                              {pagedJobs.map((job, index) => (
+                                <tr
+                                  key={job.id}
+                                  className="hover:bg-orange-50 transition-colors cursor-pointer"
+                                  onClick={() => handleJobClick(job)}
                                 >
-                                  <Eye className="h-4 w-4" />
-                                  View
-                                </button>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                )}
+                                  <td className="px-6 py-4 text-sm text-gray-400">{(jobsPage - 1) * JOBS_PER_PAGE + index + 1}</td>
+                                  <td className="px-6 py-4">
+                                    <p className="text-sm font-medium text-gray-900">{job.title}</p>
+                                    <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">{job.description}</p>
+                                  </td>
+                                  <td className="px-6 py-4">
+                                    <div className="flex flex-wrap gap-1">
+                                      {(job.tags ?? []).slice(0, 3).map((t) => (
+                                        <span key={t.id} className="inline-block px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full">
+                                          {t.tag}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  </td>
+                                  <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                                    ${job.budget.toLocaleString()}
+                                  </td>
+                                  <td className="px-6 py-4">
+                                    <StatusBadge status={job.status} />
+                                  </td>
+                                  <td className="px-6 py-4">
+                                    <span className={`text-sm font-semibold ${(job._count?.applications || 0) > 0 ? 'text-primary-600' : 'text-gray-400'}`}>
+                                      {job._count?.applications || 0}
+                                    </span>
+                                  </td>
+                                  <td className="px-6 py-4 text-sm text-gray-500">
+                                    {new Date(job.createdAt).toLocaleDateString()}
+                                  </td>
+                                  <td className="px-6 py-4 text-right">
+                                    <button
+                                      onClick={(e) => { e.stopPropagation(); handleJobClick(job); }}
+                                      className="inline-flex items-center gap-1 text-xs text-orange-600 hover:text-orange-800 font-medium"
+                                    >
+                                      <Eye className="h-4 w-4" />
+                                      View
+                                    </button>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+
+                      {/* Jobs Pagination */}
+                      {totalJobPages > 1 && (
+                        <div className="flex items-center justify-between mt-4 px-1">
+                          <p className="text-sm text-gray-500">
+                            Showing {(jobsPage - 1) * JOBS_PER_PAGE + 1}–{Math.min(jobsPage * JOBS_PER_PAGE, jobs.length)} of {jobs.length} jobs
+                          </p>
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => setJobsPage(p => Math.max(1, p - 1))}
+                              disabled={jobsPage === 1}
+                              className="px-3 py-1.5 rounded-lg text-sm font-medium border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                            >
+                              ← Prev
+                            </button>
+                            {Array.from({ length: totalJobPages }, (_, i) => i + 1)
+                              .filter(p => p === 1 || p === totalJobPages || Math.abs(p - jobsPage) <= 1)
+                              .reduce<(number | '...')[]>((acc, p, idx, arr) => {
+                                if (idx > 0 && p - (arr[idx - 1] as number) > 1) acc.push('...');
+                                acc.push(p);
+                                return acc;
+                              }, [])
+                              .map((item, idx) =>
+                                item === '...' ? (
+                                  <span key={`ellipsis-${idx}`} className="px-2 text-gray-400 text-sm">…</span>
+                                ) : (
+                                  <button
+                                    key={item}
+                                    onClick={() => setJobsPage(item as number)}
+                                    className={`w-8 h-8 rounded-lg text-sm font-medium transition ${
+                                      jobsPage === item
+                                        ? 'bg-amber-400 text-white'
+                                        : 'border border-gray-200 text-gray-600 hover:bg-gray-50'
+                                    }`}
+                                  >
+                                    {item}
+                                  </button>
+                                )
+                              )}
+                            <button
+                              onClick={() => setJobsPage(p => Math.min(totalJobPages, p + 1))}
+                              disabled={jobsPage === totalJobPages}
+                              className="px-3 py-1.5 rounded-lg text-sm font-medium border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                            >
+                              Next →
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
               </div>
             )}
           </>
@@ -1809,34 +1870,13 @@ export const Dashboard: React.FC = () => {
             {/* Recent Applications */}
             <div>
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-lg font-semibold text-gray-900">Recent Applications</h2>
+                <h2 className="text-lg font-semibold text-gray-900">My Applications</h2>
                 <Link to="/applications" className="text-primary-600 hover:text-primary-700 text-sm font-medium">
                   View All →
                 </Link>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {applications.slice(0, 6).map((app) => (
-                  <div key={app.id} className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-                    <div className="flex justify-between items-start mb-4">
-                      <div>
-                        <h3 className="font-semibold text-gray-900 mb-1">{app.job?.title}</h3>
-                        <p className="text-sm text-gray-600">Applied {new Date(app.createdAt).toLocaleDateString()}</p>
-                      </div>
-                      <StatusBadge status={app.status} />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-sm text-gray-600">Budget</span>
-                        <span className="text-sm font-medium">${app.job?.budget}</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {applications.length === 0 && (
+              {applications.length === 0 ? (
                 <div className="text-center py-12">
                   <Users className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                   <p className="text-gray-500 mb-4">No applications yet</p>
@@ -1847,7 +1887,83 @@ export const Dashboard: React.FC = () => {
                     Browse Jobs
                   </Link>
                 </div>
-              )}
+              ) : (() => {
+                const totalAppPages = Math.ceil(applications.length / APPS_PER_PAGE);
+                const pagedApps = applications.slice((appsPage - 1) * APPS_PER_PAGE, appsPage * APPS_PER_PAGE);
+                return (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {pagedApps.map((app) => (
+                        <div key={app.id} className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+                          <div className="flex justify-between items-start mb-4">
+                            <div>
+                              <h3 className="font-semibold text-gray-900 mb-1">{app.job?.title}</h3>
+                              <p className="text-sm text-gray-600">Applied {new Date(app.createdAt).toLocaleDateString()}</p>
+                            </div>
+                            <StatusBadge status={app.status} />
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <div className="flex justify-between">
+                              <span className="text-sm text-gray-600">Budget</span>
+                              <span className="text-sm font-medium">${app.job?.budget.toLocaleString()}</span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Applications Pagination */}
+                    {totalAppPages > 1 && (
+                      <div className="flex items-center justify-between mt-6 px-1">
+                        <p className="text-sm text-gray-500">
+                          Showing {(appsPage - 1) * APPS_PER_PAGE + 1}–{Math.min(appsPage * APPS_PER_PAGE, applications.length)} of {applications.length} applications
+                        </p>
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => setAppsPage(p => Math.max(1, p - 1))}
+                            disabled={appsPage === 1}
+                            className="px-3 py-1.5 rounded-lg text-sm font-medium border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                          >
+                            ← Prev
+                          </button>
+                          {Array.from({ length: totalAppPages }, (_, i) => i + 1)
+                            .filter(p => p === 1 || p === totalAppPages || Math.abs(p - appsPage) <= 1)
+                            .reduce<(number | '...')[]>((acc, p, idx, arr) => {
+                              if (idx > 0 && p - (arr[idx - 1] as number) > 1) acc.push('...');
+                              acc.push(p);
+                              return acc;
+                            }, [])
+                            .map((item, idx) =>
+                              item === '...' ? (
+                                <span key={`ellipsis-${idx}`} className="px-2 text-gray-400 text-sm">…</span>
+                              ) : (
+                                <button
+                                  key={item}
+                                  onClick={() => setAppsPage(item as number)}
+                                  className={`w-8 h-8 rounded-lg text-sm font-medium transition ${
+                                    appsPage === item
+                                      ? 'bg-amber-400 text-white'
+                                      : 'border border-gray-200 text-gray-600 hover:bg-gray-50'
+                                  }`}
+                                >
+                                  {item}
+                                </button>
+                              )
+                            )}
+                          <button
+                            onClick={() => setAppsPage(p => Math.min(totalAppPages, p + 1))}
+                            disabled={appsPage === totalAppPages}
+                            className="px-3 py-1.5 rounded-lg text-sm font-medium border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                          >
+                            Next →
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
             </div>
           </>
         )}

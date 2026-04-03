@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { Briefcase } from 'lucide-react';
 
 export const Login: React.FC = () => {
   const { login } = useAuth();
@@ -23,9 +24,12 @@ export const Login: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-white flex flex-col items-center justify-center px-4">
-      {/* Brand icon */}
-      <div className="w-16 h-16 bg-amber-400 rounded-2xl flex items-center justify-center mb-6 shadow-sm">
-        <span className="text-2xl font-bold text-white select-none">J</span>
+      {/* Logo */}
+      <div className="flex flex-col items-center mb-6">
+        <div className="w-16 h-16 bg-amber-400 rounded-2xl flex items-center justify-center shadow-sm mb-3">
+          <Briefcase className="h-8 w-8 text-white" />
+        </div>
+        <span className="font-bold text-xl text-gray-900 tracking-tight">JobMatch</span>
       </div>
 
       <h1 className="text-2xl font-bold text-gray-900 mb-1">Welcome back</h1>
