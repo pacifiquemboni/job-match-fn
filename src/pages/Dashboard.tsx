@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
@@ -13,243 +13,23 @@ import {
   Users,
   Briefcase,
   MessageSquare,
+  Search,
   Home,
   Settings,
   HelpCircle,
-  Phone,
+  CheckCircle2,
+  Clock3,
+  AlertCircle,
   BarChart3,
   Calendar,
   MoreHorizontal,
   X,
   Eye,
-  Menu,
   ChevronLeft,
   User,
   LogOut
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-
-// Sidebar Component
-const Sidebar: React.FC<{ 
-  userRole: string; 
-  activeTab: string; 
-  setActiveTab: (tab: string) => void;
-  isExpanded: boolean;
-  setIsExpanded: (expanded: boolean) => void;
-  setShowApplicationsModal: (show: boolean) => void;
-  setShowMessagesModal: (show: boolean) => void;
-  setShowProfileModal: (show: boolean) => void;
-}> = ({ userRole, activeTab, setActiveTab, isExpanded, setIsExpanded, setShowApplicationsModal, setShowMessagesModal, setShowProfileModal }) => {
-  const { user } = useAuth();
-  const { socket } = useSocket();
-  const navigate = useNavigate();
-  const [unreadMessageCount, setUnreadMessageCount] = useState(0);
-  // const [showUserDropdown, setShowUserDropdown] = useState(false);
-  
-  const clientMenuItems = [
-    { icon: Home, label: 'Dashboard', key: 'dashboard', active: true },
-    { icon: Briefcase, label: 'Jobs & Applications', key: 'jobs' },
-    { icon: MessageSquare, label: 'Messages', key: 'messages' },
-    { icon: Settings, label: 'Profile', key: 'profile' },
-  ];
-
-  const workerMenuItems = [
-    { icon: Home, label: 'Dashboard', key: 'dashboard', active: true },
-    { icon: Briefcase, label: 'Find Jobs', key: 'jobs' },
-    { icon: Users, label: 'My Applications', key: 'applications' },
-    { icon: MessageSquare, label: 'Messages', key: 'messages' },
-    { icon: Settings, label: 'Profile', key: 'profile' },
-  ];
-  
-  const menuItems = userRole === 'CLIENT' ? clientMenuItems : workerMenuItems;
-  
-  const bottomItems = [
-    { icon: Phone, label: 'Contact Us', key: 'contact' },
-    { icon: HelpCircle, label: 'Need Help', key: 'help' },
-  ];
-
-  const handleNavigation = (item: any) => {
-    // Close mobile sidebar after navigation
-    if (window.innerWidth < 768) {
-      setIsExpanded(false);
-    }
-    
-    if (item.key === 'dashboard') {
-      setActiveTab('overview');
-    } else if (item.key === 'jobs') {
-      if (userRole === 'CLIENT') {
-        setActiveTab('jobs');
-      } else {
-        navigate('/jobs');
-      }
-    } else if (item.key === 'applications') {
-      setShowApplicationsModal(true);
-    } else if (item.key === 'messages') {
-      setShowMessagesModal(true);
-    } else if (item.key === 'profile') {
-      setShowProfileModal(true);
-    }
-  };
-
-  // Fetch initial unread count from API
-  useEffect(() => {
-    if (!user) return;
-    const fetchUnreadCount = async () => {
-      try {
-        const conversations = await messagesService.getConversations();
-        const total = conversations.reduce((sum, c) => sum + (c.unreadCount ?? 0), 0);
-        setUnreadMessageCount(total);
-      } catch {}
-    };
-    fetchUnreadCount();
-  }, [user]);
-
-  // Socket integration for message count
-  useEffect(() => {
-    if (socket && user) {
-      socket.on('newMessage', () => {
-        setUnreadMessageCount(prev => prev + 1);
-      });
-
-      socket.on('messagesRead', () => {
-        setUnreadMessageCount(0);
-      });
-
-      socket.emit('getUnreadCount');
-      socket.on('unreadCount', (count: number) => {
-        setUnreadMessageCount(count);
-      });
-
-      return () => {
-        socket.off('newMessage');
-        socket.off('messagesRead');
-        socket.off('unreadCount');
-      };
-    }
-  }, [socket, user]);
-
-
-
-  return (
-    <div className={`bg-gray-900 min-h-screen flex flex-col transition-all duration-300 ${
-      isExpanded 
-        ? 'fixed inset-0 z-50 w-full md:static md:w-64' 
-        : 'hidden md:flex md:w-20'
-    } md:p-6 p-4`}>
-      {/* Mobile Overlay */}
-      {isExpanded && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden" 
-          onClick={() => setIsExpanded(false)}
-        />
-      )}
-      
-      {/* Logo and Toggle */}
-      <div className={`flex items-center ${isExpanded ? 'justify-between' : 'justify-center'} mb-6 md:mb-8`}>
-        <div className={`flex items-center space-x-2 ${!isExpanded && 'hidden'}`}>
-          <div className="w-10 h-10 bg-orange-600 rounded-lg flex items-center justify-center">
-            <Briefcase className="h-6 w-6 text-white" />
-          </div>
-          {isExpanded && (
-            <div className="text-white">
-              <div className="font-bold text-lg">JobMatch</div>
-              <div className="text-xs text-gray-400">Dashboard</div>
-            </div>
-          )}
-        </div>
-        
-        {/* Toggle Button */}
-        <button
-          onClick={() => setIsExpanded(!isExpanded)}
-          className={`transition-all duration-300 rounded-lg ${
-            isExpanded 
-              ? 'text-gray-400 hover:text-white hover:bg-gray-800 p-2' 
-              : 'text-white bg-orange-600 hover:bg-orange-700 p-2 md:p-3 shadow-lg flex items-center justify-center'
-          }`}
-        >
-          {isExpanded ? <ChevronLeft className="h-5 w-5" /> : <Menu className="h-5 w-5 md:h-6 md:w-6" />}
-        </button>
-        
-        {/* Close button for mobile */}
-        {isExpanded && (
-          <button
-            onClick={() => setIsExpanded(false)}
-            className="md:hidden text-gray-400 hover:text-white p-2"
-          >
-            <X className="h-6 w-6" />
-          </button>
-        )}
-      </div>
-
-      {/* Navigation */}
-      <nav className="flex-1">
-        <div className="space-y-2">
-          {menuItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = item.key === activeTab || (item.key === 'dashboard' && activeTab === 'overview');
-            return (
-              <div key={item.key} className="relative group">
-                <button
-                  onClick={() => handleNavigation(item)}
-                  className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-left transition-colors relative ${
-                    isActive
-                      ? 'bg-orange-600 text-white'
-                      : 'text-gray-400 hover:text-white hover:bg-gray-800'
-                  }`}
-                >
-                  <Icon className="h-5 w-5 flex-shrink-0" />
-                  {isExpanded && <span>{item.label}</span>}
-                  {/* Message Counter Badge */}
-                  {item.key === 'messages' && unreadMessageCount > 0 && (
-                    <div className={`${
-                      isExpanded 
-                        ? 'ml-auto' 
-                        : 'absolute -top-1 -right-1'
-                    } bg-red-500 text-white text-xs rounded-full min-w-[18px] h-[18px] flex items-center justify-center font-semibold`}>
-                      {unreadMessageCount > 99 ? '99+' : unreadMessageCount}
-                    </div>
-                  )}
-                </button>
-                
-                {/* Tooltip for collapsed state */}
-                {!isExpanded && (
-                  <div className="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
-                    {item.label}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-        
-        {/* Bottom Menu */}
-        <div className="mt-auto pt-6 space-y-2">
-          {bottomItems.map((item) => {
-            const Icon = item.icon;
-            return (
-              <div key={item.key} className="relative group">
-                <button
-                  onClick={() => handleNavigation(item)}
-                  className="w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-left text-gray-400 hover:text-white hover:bg-gray-800 transition-colors"
-                >
-                  <Icon className="h-5 w-5 flex-shrink-0" />
-                  {isExpanded && <span>{item.label}</span>}
-                </button>
-                
-                {/* Tooltip for collapsed state */}
-                {!isExpanded && (
-                  <div className="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
-                    {item.label}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </nav>
-    </div>
-  );
-};
 
 // Messages Modal Component
 const MessagesModal: React.FC<{ isOpen: boolean; onClose: () => void; initialApplicationId?: string }> = ({ isOpen, onClose, initialApplicationId }) => {
@@ -564,223 +344,275 @@ const MyApplicationsModal: React.FC<{ isOpen: boolean; onClose: () => void; appl
     rejected: statusCounts['REJECTED'] || 0,
   };
 
+  const sortedApplications = [...filteredApplications].sort((firstApplication, secondApplication) => {
+    return new Date(secondApplication.createdAt).getTime() - new Date(firstApplication.createdAt).getTime();
+  });
+
+  const timelineSteps = ['APPLIED', 'MATCHED', 'IN_PROGRESS', 'COMPLETED'] as const;
+  const currentStepIndex = (status: Application['status']) => {
+    switch (status) {
+      case 'PENDING':
+        return 0;
+      case 'MATCHED':
+        return 1;
+      case 'IN_PROGRESS':
+        return 2;
+      case 'COMPLETED':
+        return 3;
+      default:
+        return -1;
+    }
+  };
+
   const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
     const colors: Record<string, string> = {
-      PENDING: 'bg-yellow-100 text-yellow-800',
-      MATCHED: 'bg-purple-100 text-purple-800',
-      IN_PROGRESS: 'bg-blue-100 text-blue-800',
-      COMPLETED: 'bg-green-100 text-green-800',
-      REJECTED: 'bg-red-100 text-red-800',
+      PENDING: 'bg-[#dbe8f7] text-[#4e6073]',
+      MATCHED: 'bg-[#c7e7ff] text-[#00658f]',
+      IN_PROGRESS: 'bg-[#ffdcc5] text-[#944a00]',
+      COMPLETED: 'bg-[#d8f5d0] text-[#2d6a34]',
+      REJECTED: 'bg-[#ffd9d6] text-[#ba1a1a]',
     };
     return (
-      <span className={`px-3 py-1 rounded-full text-sm font-medium ${colors[status] || 'bg-gray-100'}`}>
+      <span className={`rounded-full px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.18em] ${colors[status] || 'bg-slate-100 text-slate-600'}`}>
         {status.replace('_', ' ')}
       </span>
     );
   };
 
   const StatusTimeline: React.FC<{ status: Application['status'] }> = ({ status }) => {
-    const statusFlow = ['PENDING', 'MATCHED', 'IN_PROGRESS', 'COMPLETED'];
-    const currentIndex = statusFlow.indexOf(status);
     const isRejected = status === 'REJECTED';
+    const currentIndex = currentStepIndex(status);
 
     if (isRejected) {
       return (
-        <div className="flex items-center gap-2 mt-3">
-          <X className="h-4 w-4 text-red-500" />
-          <span className="text-xs text-red-600 font-medium">Application Rejected</span>
+        <div className="mt-4 flex items-center gap-2 rounded-2xl bg-[#fff1ef] px-4 py-3 text-sm font-semibold text-[#ba1a1a]">
+          <AlertCircle className="h-4 w-4" />
+          <span>Application Rejected</span>
         </div>
       );
     }
 
     return (
-      <div className="flex items-center gap-1 mt-3">
-        {statusFlow.map((s, idx) => (
-          <React.Fragment key={s}>
-            <div
-              className={`flex items-center justify-center h-6 w-6 rounded-full text-xs font-semibold ${
-                idx <= currentIndex
-                  ? 'bg-orange-600 text-white'
-                  : 'bg-gray-200 text-gray-500'
-              }`}
-            >
-              {idx < currentIndex ? (
-                <Eye className="h-4 w-4" />
-              ) : idx === currentIndex ? (
-                <MoreHorizontal className="h-4 w-4" />
-              ) : (
-                idx + 1
-              )}
-            </div>
-            {idx < statusFlow.length - 1 && (
-              <div
-                className={`h-0.5 w-6 ${
-                  idx < currentIndex ? 'bg-orange-600' : 'bg-gray-200'
-                }`}
-              />
-            )}
-          </React.Fragment>
-        ))}
+      <div className="py-4">
+        <div className="flex items-center justify-between gap-1 overflow-x-auto px-1">
+          {timelineSteps.map((step, idx) => {
+            return (
+              <React.Fragment key={step}>
+                <div className="flex min-w-[70px] flex-col items-center gap-2 text-center">
+                  <div
+                    className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold ring-4 ${
+                      idx <= currentIndex
+                        ? 'bg-[#e67e22] text-white ring-[#ffdcc5]'
+                        : 'bg-[#eceef0] text-slate-500 ring-transparent'
+                    }`}
+                  >
+                    {idx + 1}
+                  </div>
+                  <span className={`text-[10px] font-black uppercase tracking-[0.12em] ${idx <= currentIndex ? 'text-[#944a00]' : 'text-slate-400'}`}>
+                    {step.replace('_', ' ')}
+                  </span>
+                </div>
+                {idx < timelineSteps.length - 1 && (
+                  <div className={`h-[2px] flex-1 ${idx < currentIndex ? 'bg-[#e67e22]' : 'bg-[#dcc1b1]/35'} -mt-6`} />
+                )}
+              </React.Fragment>
+            );
+          })}
+        </div>
       </div>
     );
   };
 
+  const statCards = [
+    {
+      key: 'total',
+      label: 'Total',
+      value: stats.total,
+      icon: BarChart3,
+      iconClass: 'text-slate-400',
+    },
+    {
+      key: 'active',
+      label: 'Active',
+      value: stats.active,
+      icon: Clock3,
+      iconClass: 'text-[#00658f]',
+    },
+    {
+      key: 'completed',
+      label: 'Completed',
+      value: stats.completed,
+      icon: CheckCircle2,
+      iconClass: 'text-[#944a00]',
+    },
+    {
+      key: 'rejected',
+      label: 'Rejected',
+      value: stats.rejected,
+      icon: X,
+      iconClass: 'text-[#ba1a1a]',
+    },
+  ];
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl max-w-6xl w-full max-h-[90vh] overflow-hidden">
-        <div className="flex items-center justify-between p-6 border-b">
-          <h2 className="text-xl font-semibold text-gray-800">My Applications</h2>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/35 p-4 backdrop-blur-sm md:p-8">
+      <div className="flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-[28px] border border-[#dcc1b1]/20 bg-white shadow-2xl">
+        <div className="flex items-center justify-between border-b border-[#dcc1b1]/20 px-6 py-5 md:px-8 md:py-6">
+          <div className="flex items-center gap-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#ffdcc5] text-[#944a00]">
+              <Briefcase className="h-5 w-5" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-extrabold tracking-tight text-slate-950">My Applications</h2>
+              <p className="text-sm font-medium text-slate-500">Manage and track your active job pursuits</p>
+            </div>
+          </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="flex h-10 w-10 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
           >
             <X className="h-6 w-6" />
           </button>
         </div>
         
-        <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
-          {/* Stats Overview */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <div className="bg-gray-50 rounded-lg p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-500 text-sm">Total</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
+        <div className="flex-1 overflow-y-auto px-6 py-6 md:px-8 md:py-8">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+            {statCards.map((card) => {
+              const Icon = card.icon;
+              return (
+                <div key={card.key} className="rounded-2xl bg-[#f2f4f6] p-4 transition hover:border hover:border-[#e67e22]/20">
+                  <div className="mb-2 flex items-center justify-between">
+                    <span className="text-[11px] font-black uppercase tracking-[0.16em] text-slate-500">{card.label}</span>
+                    <Icon className={`h-5 w-5 ${card.iconClass}`} />
+                  </div>
+                  <div className="text-3xl font-black text-slate-950">{card.value}</div>
                 </div>
-                <BarChart3 className="h-8 w-8 text-gray-300" />
-              </div>
-            </div>
-
-            <div className="bg-gray-50 rounded-lg p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-500 text-sm">Active</p>
-                  <p className="text-2xl font-bold text-orange-600">{stats.active}</p>
-                </div>
-                <MoreHorizontal className="h-8 w-8 text-orange-300" />
-              </div>
-            </div>
-
-            <div className="bg-gray-50 rounded-lg p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-500 text-sm">Completed</p>
-                  <p className="text-2xl font-bold text-green-600">{stats.completed}</p>
-                </div>
-                <Eye className="h-8 w-8 text-green-300" />
-              </div>
-            </div>
-
-            <div className="bg-gray-50 rounded-lg p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-500 text-sm">Rejected</p>
-                  <p className="text-2xl font-bold text-red-600">{stats.rejected}</p>
-                </div>
-                <X className="h-8 w-8 text-red-300" />
-              </div>
-            </div>
+              );
+            })}
           </div>
 
-          {/* Filter Tabs */}
-          <div className="flex flex-wrap gap-2 mb-6">
+          <div className="mt-8 border-b border-[#dcc1b1]/20">
+            <div className="flex gap-6 overflow-x-auto no-scrollbar">
             {['all', 'PENDING', 'MATCHED', 'IN_PROGRESS', 'COMPLETED', 'REJECTED'].map((status) => (
               <button
                 key={status}
                 onClick={() => setFilter(status)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                  className={`whitespace-nowrap border-b-2 pb-4 text-sm font-bold uppercase tracking-[0.08em] transition ${
                   filter === status
-                    ? 'bg-orange-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      ? 'border-[#e67e22] text-[#944a00]'
+                      : 'border-transparent text-slate-500 hover:text-slate-900'
                 }`}
               >
                 {status === 'all' ? 'All' : status.replace('_', ' ')}
                 {status === 'all' ? ` (${applications.length})` : statusCounts[status] ? ` (${statusCounts[status]})` : ''}
               </button>
             ))}
+            </div>
           </div>
 
-          {/* Applications List */}
-          {filteredApplications.length === 0 ? (
-            <div className="bg-gray-50 rounded-lg p-8 text-center">
-              <Briefcase className="h-16 w-16 mx-auto mb-4 text-gray-300" />
-              <p className="text-gray-500 mb-4">
+          <div className="mt-8 space-y-6">
+          {sortedApplications.length === 0 ? (
+            <div className="rounded-3xl bg-[#f2f4f6] p-10 text-center">
+              <Briefcase className="mx-auto mb-4 h-14 w-14 text-slate-300" />
+              <p className="text-slate-500 mb-4">
                 {applications.length === 0
                   ? "You haven't applied to any jobs yet."
                   : 'No applications match this filter.'}
               </p>
               {applications.length === 0 && (
-                <button
+                <Link
+                  to="/jobs"
+                  className="inline-flex rounded-xl bg-[#944a00] px-6 py-3 text-sm font-bold text-white transition hover:bg-[#7a3d00]"
                   onClick={onClose}
-                  className="px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition"
                 >
                   Browse Jobs
-                </button>
+                </Link>
               )}
             </div>
           ) : (
-            <div className="space-y-4">
-              {filteredApplications.map((app) => (
+            <div className="space-y-6">
+              {sortedApplications.map((app) => (
                 <div
                   key={app.id}
-                  className="bg-gray-50 rounded-lg p-6 hover:bg-gray-100 transition"
+                  className="group relative overflow-hidden rounded-[28px] border border-[#dcc1b1]/15 bg-white p-6 shadow-sm transition duration-300 hover:shadow-xl"
                 >
-                  <div className="flex flex-col md:flex-row md:justify-between md:items-start mb-4">
-                    <div className="flex-1">
-                      <h3 className="text-xl font-semibold text-gray-900">
-                        {app.job?.title}
-                      </h3>
-                      <p className="text-gray-500 text-sm mt-1">
-                        Client: {app.job?.client.email}
-                      </p>
+                  <div className="absolute bottom-6 left-0 top-6 w-1 rounded-r-full bg-[#e67e22]" />
+                  <div className="flex flex-col gap-6 md:flex-row">
+                    <div className="flex-1 space-y-5 pl-3 md:pl-4">
+                      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                        <div>
+                          <h3 className="text-2xl font-bold tracking-tight text-slate-950 transition group-hover:text-[#944a00]">
+                            {app.job?.title}
+                          </h3>
+                          <div className="mt-2 flex items-center gap-2 text-sm font-medium text-slate-500">
+                            <User className="h-4 w-4" />
+                            <span>{app.job?.client.email}</span>
+                          </div>
+                        </div>
+                        <div className="text-left md:text-right">
+                          <div className="text-3xl font-black text-slate-950">${app.job?.budget?.toLocaleString()}</div>
+                          <div className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">Project Budget</div>
+                        </div>
+                      </div>
+
+                      <StatusTimeline status={app.status} />
+
+                      <div className="flex flex-wrap items-center justify-between gap-4">
+                        <div className="flex flex-wrap gap-2">
+                          {app.job?.tags.slice(0, 5).map((tag) => (
+                            <span
+                              key={tag.id}
+                              className="rounded-full bg-[#eceef0] px-3 py-1 text-[11px] font-black uppercase tracking-[0.1em] text-slate-600"
+                            >
+                              {tag.tag}
+                            </span>
+                          ))}
+                        </div>
+
+                        <div className="flex items-center gap-2 text-xs font-medium text-slate-500">
+                          <Calendar className="h-4 w-4" />
+                          <span>Applied {new Date(app.createdAt).toLocaleDateString()}</span>
+                        </div>
+                      </div>
                     </div>
-                    <div className="mt-3 md:mt-0">
+
+                    <div className="flex flex-row items-end justify-between gap-4 border-t border-[#dcc1b1]/15 pt-4 md:w-40 md:flex-col md:border-l md:border-t-0 md:pl-6 md:pt-0">
                       <StatusBadge status={app.status} />
+
+                      <div className="flex w-full flex-col gap-3">
+                        <Link
+                          to={app.job?.id ? `/jobs/${app.job.id}` : '/jobs'}
+                          onClick={onClose}
+                          className="inline-flex w-full items-center justify-center rounded-xl bg-[#944a00] px-4 py-3 text-sm font-bold text-white shadow-md transition hover:bg-[#7a3d00]"
+                        >
+                          View Job
+                        </Link>
+                        {(app.status === 'MATCHED' || app.status === 'IN_PROGRESS') && (
+                          <button
+                            onClick={() => onOpenChat(app.id)}
+                            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#f2f4f6] px-4 py-3 text-sm font-bold text-slate-900 transition hover:bg-[#eceef0]"
+                          >
+                            <MessageSquare className="h-4 w-4" />
+                            Open Chat
+                          </button>
+                        )}
+                      </div>
                     </div>
-                  </div>
-
-                  {/* Budget and Date */}
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-3 pb-4 border-b border-gray-200">
-                    <span className="text-lg font-bold text-orange-600">
-                      💰 ${app.job?.budget.toLocaleString()}
-                    </span>
-                    <span className="text-gray-400 hidden sm:block">|</span>
-                    <span className="text-gray-600 text-sm">
-                      📅 Applied {new Date(app.createdAt).toLocaleDateString()}
-                    </span>
-                  </div>
-
-                  {/* Status Timeline */}
-                  <StatusTimeline status={app.status} />
-
-                  {/* Tags */}
-                  <div className="flex flex-wrap gap-2 my-4">
-                    {app.job?.tags.slice(0, 5).map((t) => (
-                      <span key={t.id} className="px-2 py-1 bg-white text-gray-600 rounded text-xs border">
-                        {t.tag}
-                      </span>
-                    ))}
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="flex gap-3 flex-wrap">
-                    <button className="px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition text-sm font-medium">
-                      View Job
-                    </button>
-                    {(app.status === 'MATCHED' || app.status === 'IN_PROGRESS') && (
-                      <button
-                        onClick={() => onOpenChat(app.id)}
-                        className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition text-sm font-medium"
-                      >
-                        <MessageSquare className="h-4 w-4" />
-                        Open Chat
-                      </button>
-                    )}
                   </div>
                 </div>
               ))}
             </div>
           )}
+          </div>
+        </div>
+
+        <div className="flex justify-end bg-[#f2f4f6] px-6 py-4 md:px-8">
+          <button
+            onClick={onClose}
+            className="rounded-xl px-6 py-2.5 text-sm font-bold text-slate-500 transition hover:bg-[#eceef0] hover:text-slate-900"
+          >
+            Close
+          </button>
         </div>
       </div>
     </div>
@@ -1175,47 +1007,14 @@ export const Dashboard: React.FC = () => {
   const [showMessagesModal, setShowMessagesModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showApplicationsModal, setShowApplicationsModal] = useState(false);
-  const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [unreadMessageCount, setUnreadMessageCount] = useState(0);
   const [initialChatApplicationId, setInitialChatApplicationId] = useState<string | undefined>(undefined);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setShowUserDropdown(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
   const [, setLoadingApplications] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
 
   // Pagination
   const JOBS_PER_PAGE = 10;
-  const APPS_PER_PAGE = 6;
   const [jobsPage, setJobsPage] = useState(1);
-  const [appsPage, setAppsPage] = useState(1);
-  
-  // Mobile-first: collapsed by default, use effect to set desktop state
-  const [isExpanded, setIsExpanded] = useState(false);
-  
-  // Set desktop state on mount and window resize
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth >= 768) { // md breakpoint
-        setIsExpanded(true);
-      } else {
-        setIsExpanded(false);
-      }
-    };
-    
-    handleResize(); // Set initial state
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   useEffect(() => {
     loadData();
@@ -1333,602 +1132,735 @@ export const Dashboard: React.FC = () => {
         total: applications.length
       };
 
+  const workerDisplayName = user?.email
+    ? user.email
+        .split('@')[0]
+        .split(/[._-]/)
+        .filter(Boolean)
+        .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+        .join(' ')
+    : 'there';
+  const workerSkillsCount = user?.workerProfile?.skills?.length ?? 0;
+  const profileStrength = Math.min(
+    100,
+    (user?.email ? 40 : 0) +
+      (workerSkillsCount > 0 ? Math.min(35, 20 + workerSkillsCount * 5) : 0) +
+      (user?.workerProfile?.bio ? 25 : 0)
+  );
+  const recentWorkerApplications = [...applications]
+    .sort((firstApplication, secondApplication) => {
+      return new Date(secondApplication.createdAt).getTime() - new Date(firstApplication.createdAt).getTime();
+    })
+    .slice(0, 3);
+
+  if (user?.role === 'WORKER') {
+    return (
+      <div className="min-h-screen bg-[#f7f9fb] md:flex">
+        <aside className="hidden md:flex md:fixed md:left-0 md:top-0 md:h-screen md:w-64 md:flex-col md:border-r md:border-slate-200/40 md:bg-slate-50 md:px-4 md:py-8">
+          <div className="mb-10 flex items-center gap-3 px-2">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#944a00] to-[#e67e22] text-white">
+              <Briefcase className="h-5 w-5" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-black tracking-tight text-orange-900">JobMatch</h1>
+              <p className="text-xs font-medium uppercase tracking-[0.22em] text-slate-500">Worker Portal</p>
+            </div>
+          </div>
+
+          <nav className="flex-1 space-y-1">
+            <button className="flex w-full items-center gap-3 rounded-xl border-r-4 border-orange-800 bg-orange-50/60 px-4 py-3 font-bold text-orange-900">
+              <Home className="h-5 w-5" />
+              <span>Dashboard</span>
+            </button>
+            <button
+              onClick={() => navigate('/jobs')}
+              className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-slate-500 transition hover:bg-slate-200/50 hover:text-orange-700"
+            >
+              <Briefcase className="h-5 w-5" />
+              <span>Jobs</span>
+            </button>
+            <button
+              onClick={() => setShowApplicationsModal(true)}
+              className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-slate-500 transition hover:bg-slate-200/50 hover:text-orange-700"
+            >
+              <Users className="h-5 w-5" />
+              <span>Applications</span>
+            </button>
+            <button
+              onClick={() => setShowProfileModal(true)}
+              className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-slate-500 transition hover:bg-slate-200/50 hover:text-orange-700"
+            >
+              <Settings className="h-5 w-5" />
+              <span>Settings</span>
+            </button>
+          </nav>
+
+          <div className="mt-auto space-y-6">
+            <Link
+              to="/jobs"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-[#944a00] to-[#e67e22] px-4 py-4 font-bold text-white shadow-lg shadow-orange-500/20 transition active:scale-95"
+            >
+              <Search className="h-4 w-4" />
+              Find New Jobs
+            </Link>
+
+            <div className="border-t border-slate-200/50 pt-6">
+              <button className="flex w-full items-center gap-3 px-4 py-2 text-slate-500 transition hover:text-orange-700">
+                <HelpCircle className="h-5 w-5" />
+                <span className="text-sm font-medium">Help Center</span>
+              </button>
+              <button
+                onClick={handleLogout}
+                className="mt-2 flex w-full items-center gap-3 px-4 py-2 text-slate-500 transition hover:text-red-600"
+              >
+                <LogOut className="h-5 w-5" />
+                <span className="text-sm font-medium">Logout</span>
+              </button>
+            </div>
+          </div>
+        </aside>
+
+        <main className="min-h-screen flex-1 md:ml-64">
+          <header className="sticky top-0 z-40 flex items-center justify-between gap-4 bg-white/70 px-4 py-4 shadow-sm backdrop-blur-md sm:px-6 lg:px-8">
+            <div className="relative w-full max-w-md flex-1">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search tasks or applications..."
+                className="w-full rounded-xl border-none bg-slate-200/70 py-2.5 pl-10 pr-4 text-sm text-slate-900 placeholder:text-slate-500 focus:ring-2 focus:ring-orange-200"
+              />
+            </div>
+
+            <div className="flex items-center gap-4 sm:gap-6">
+              <div className="relative">
+                <NotificationDropdown />
+              </div>
+              <button
+                onClick={() => setShowMessagesModal(true)}
+                className="text-slate-600 transition hover:text-orange-800"
+              >
+                <MessageSquare className="h-5 w-5" />
+              </button>
+              <div className="hidden h-8 w-px bg-slate-200 sm:block" />
+              <button
+                onClick={() => setShowProfileModal(true)}
+                className="flex items-center gap-3"
+              >
+                <div className="hidden text-right sm:block">
+                  <p className="text-sm font-bold text-slate-900">{workerDisplayName}</p>
+                  <p className="text-xs font-medium text-slate-500">
+                    {workerSkillsCount > 0 ? `${workerSkillsCount} skills listed` : 'Complete your profile'}
+                  </p>
+                </div>
+                <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-orange-200 bg-orange-600 text-sm font-semibold text-white">
+                  {user?.email ? getInitials(user.email) : 'W'}
+                </div>
+              </button>
+            </div>
+          </header>
+
+          <div className="mx-auto max-w-7xl space-y-10 p-4 sm:p-6 lg:p-8">
+            <section className="space-y-1">
+              <h2 className="text-4xl font-extrabold tracking-tight text-slate-950">
+                Welcome back, {workerDisplayName}.
+              </h2>
+              <p className="text-lg text-slate-500">
+                You currently have {stats.matched} matched opportunities and {stats.inProgress} active projects.
+              </p>
+            </section>
+
+            <section className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
+              <div className="rounded-xl border-l-4 border-[#944a00] bg-white p-6 shadow-sm transition hover:-translate-y-1">
+                <div className="mb-4 flex items-start justify-between">
+                  <div className="rounded-lg bg-[#ffdcc5] p-2 text-[#944a00]">
+                    <Briefcase className="h-5 w-5" />
+                  </div>
+                  <span className="rounded-full bg-[#ffdcc5] px-2 py-1 text-xs font-bold text-[#944a00]">Total</span>
+                </div>
+                <p className="text-sm font-medium text-slate-500">Applications Submitted</p>
+                <h3 className="mt-1 text-3xl font-black text-slate-950">{String(stats.total).padStart(2, '0')}</h3>
+              </div>
+
+              <div className="rounded-xl border-l-4 border-[#4e6073] bg-white p-6 shadow-sm transition hover:-translate-y-1">
+                <div className="mb-4 rounded-lg bg-[#d1e4fb] p-2 text-[#4e6073] w-fit">
+                  <Calendar className="h-5 w-5" />
+                </div>
+                <p className="text-sm font-medium text-slate-500">Pending Waiting</p>
+                <h3 className="mt-1 text-3xl font-black text-slate-950">{String(stats.pending).padStart(2, '0')}</h3>
+              </div>
+
+              <div className="rounded-xl border-l-4 border-[#00658f] bg-white p-6 shadow-sm transition hover:-translate-y-1">
+                <div className="mb-4 flex items-start justify-between">
+                  <div className="rounded-lg bg-[#c7e7ff] p-2 text-[#00658f]">
+                    <Users className="h-5 w-5" />
+                  </div>
+                  <span className="rounded-full bg-[#c7e7ff] px-2 py-1 text-xs font-bold text-[#00658f]">New</span>
+                </div>
+                <p className="text-sm font-medium text-slate-500">Matched Success</p>
+                <h3 className="mt-1 text-3xl font-black text-slate-950">{String(stats.matched).padStart(2, '0')}</h3>
+              </div>
+
+              <div className="rounded-xl border-l-4 border-[#e67e22] bg-white p-6 shadow-sm transition hover:-translate-y-1">
+                <div className="mb-4 rounded-lg bg-orange-100 p-2 text-[#e67e22] w-fit">
+                  <BarChart3 className="h-5 w-5" />
+                </div>
+                <p className="text-sm font-medium text-slate-500">In Progress Active</p>
+                <h3 className="mt-1 text-3xl font-black text-slate-950">{String(stats.inProgress).padStart(2, '0')}</h3>
+              </div>
+            </section>
+
+            <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
+              <section className="space-y-6 lg:col-span-8">
+                <div className="flex items-end justify-between gap-4">
+                  <h3 className="text-3xl font-bold tracking-tight text-slate-950">My Applications</h3>
+                  <button
+                    onClick={() => setShowApplicationsModal(true)}
+                    className="text-sm font-bold text-[#944a00] transition hover:underline"
+                  >
+                    View All Applications
+                  </button>
+                </div>
+
+                <div className="overflow-hidden rounded-xl bg-white shadow-sm">
+                  {recentWorkerApplications.length === 0 ? (
+                    <div className="p-10 text-center">
+                      <Users className="mx-auto mb-4 h-12 w-12 text-slate-300" />
+                      <p className="text-slate-500">No applications yet.</p>
+                      <Link
+                        to="/jobs"
+                        className="mt-4 inline-flex items-center rounded-xl bg-[#944a00] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#7a3d00]"
+                      >
+                        Browse Jobs
+                      </Link>
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-slate-100">
+                      {recentWorkerApplications.map((application) => (
+                        <button
+                          key={application.id}
+                          onClick={() => setShowApplicationsModal(true)}
+                          className="flex w-full flex-col gap-4 p-6 text-left transition hover:bg-slate-50 md:flex-row md:items-center md:justify-between"
+                        >
+                          <div className="flex items-center gap-4">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100 text-sm font-bold text-slate-600">
+                              {application.job?.title?.charAt(0).toUpperCase() || 'J'}
+                            </div>
+                            <div>
+                              <h4 className="text-lg font-bold leading-tight text-slate-950">{application.job?.title}</h4>
+                              <p className="text-xs font-medium text-slate-500">
+                                Applied {new Date(application.createdAt).toLocaleDateString()} • {application.job?.client.email}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center justify-between gap-6 md:justify-end">
+                            <div className="text-right">
+                              <p className="text-sm font-bold text-slate-950">
+                                ${application.job?.budget?.toLocaleString()}
+                              </p>
+                              <p className="text-[10px] font-medium uppercase tracking-[0.16em] text-slate-400">
+                                Budget
+                              </p>
+                            </div>
+                            <StatusBadge status={application.status} />
+                            <MoreHorizontal className="h-5 w-5 text-slate-300" />
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </section>
+
+              <aside className="space-y-8 lg:col-span-4">
+                <div className="relative overflow-hidden rounded-xl bg-[#f2f4f6] p-8">
+                  <div className="relative z-10">
+                    <h4 className="mb-6 text-lg font-bold text-slate-950">Profile Strength</h4>
+                    <div className="mb-6 flex items-center justify-center">
+                      <div className="relative h-32 w-32">
+                        <svg className="h-full w-full -rotate-90" viewBox="0 0 36 36">
+                          <path
+                            className="stroke-current text-[#c7e7ff]"
+                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                            fill="none"
+                            strokeWidth="3"
+                          />
+                          <path
+                            className="stroke-current text-[#00658f]"
+                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                            fill="none"
+                            strokeDasharray={`${profileStrength}, 100`}
+                            strokeLinecap="round"
+                            strokeWidth="3"
+                          />
+                        </svg>
+                        <div className="absolute inset-0 flex items-center justify-center text-2xl font-black text-slate-950">
+                          {profileStrength}%
+                        </div>
+                      </div>
+                    </div>
+                    <p className="mb-6 text-center text-sm text-slate-600">
+                      Add more profile details and skills to improve your visibility.
+                    </p>
+                    <button
+                      onClick={() => setShowProfileModal(true)}
+                      className="w-full rounded-xl border-2 border-[#944a00] py-3 font-bold text-[#944a00] transition hover:bg-[#944a00] hover:text-white"
+                    >
+                      Complete Profile
+                    </button>
+                  </div>
+                  <div className="absolute -bottom-12 -right-12 h-48 w-48 rounded-full bg-[#944a00]/5 blur-3xl" />
+                </div>
+
+                <div className="space-y-4 rounded-xl bg-white p-6 shadow-sm">
+                  <h4 className="text-lg font-bold text-slate-950">Application Snapshot</h4>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-slate-500">Pending Review</span>
+                      <span className="text-sm font-bold text-slate-950">{stats.pending}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-slate-500">Matched</span>
+                      <span className="text-sm font-bold text-slate-950">{stats.matched}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-slate-500">In Progress</span>
+                      <span className="text-sm font-bold text-slate-950">{stats.inProgress}</span>
+                    </div>
+                    <div className="h-px bg-slate-100" />
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-slate-950">Total Applications</span>
+                      <span className="text-xl font-black text-[#944a00]">{stats.total}</span>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShowApplicationsModal(true)}
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-100 py-3 font-bold text-slate-900 transition hover:bg-slate-200"
+                  >
+                    <Eye className="h-4 w-4" />
+                    View Applications
+                  </button>
+                </div>
+              </aside>
+            </div>
+          </div>
+
+          <MessagesModal 
+            isOpen={showMessagesModal} 
+            onClose={() => { setShowMessagesModal(false); setInitialChatApplicationId(undefined); }}
+            initialApplicationId={initialChatApplicationId}
+          />
+
+          <MyApplicationsModal
+            isOpen={showApplicationsModal}
+            onClose={() => setShowApplicationsModal(false)}
+            applications={applications}
+            onOpenChat={(appId) => {
+              setShowApplicationsModal(false);
+              setInitialChatApplicationId(appId);
+              setShowMessagesModal(true);
+            }}
+          />
+
+          <ProfileModal 
+            isOpen={showProfileModal} 
+            onClose={() => setShowProfileModal(false)} 
+            user={user}
+          />
+        </main>
+      </div>
+    );
+  }
+
+  // CLIENT DASHBOARD — same visual style as Worker Dashboard
+  const recentClientJobs = [...jobs]
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, 3);
+  const totalAppsReceived = jobs.reduce((sum, j) => sum + (j._count?.applications || 0), 0);
+  const clientOpenJobs = jobs.filter(j => j.status === 'OPEN').length;
+  const clientInProgressJobs = jobs.filter(j => j.status === 'IN_PROGRESS').length;
+  const clientCompletedJobs = jobs.filter(j => j.status === 'COMPLETED').length;
+
   return (
-    <div className="flex flex-col md:flex-row min-h-screen bg-gray-100">
-      {/* Mobile Header */}
-      <div className="md:hidden bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center space-x-2">
-          <div className="w-8 h-8 bg-orange-600 rounded-lg flex items-center justify-center">
-            <Briefcase className="h-5 w-5 text-white" />
+    <div className="min-h-screen bg-[#f7f9fb] md:flex">
+      {/* Client Sidebar */}
+      <aside className="hidden md:flex md:fixed md:left-0 md:top-0 md:h-screen md:w-64 md:flex-col md:border-r md:border-slate-200/40 md:bg-slate-50 md:px-4 md:py-8">
+        <div className="mb-10 flex items-center gap-3 px-2">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#944a00] to-[#e67e22] text-white">
+            <Briefcase className="h-5 w-5" />
           </div>
           <div>
-            <div className="font-bold text-lg text-gray-900">JobMatch</div>
-            <div className="text-xs text-gray-500">Dashboard</div>
+            <h1 className="text-2xl font-black tracking-tight text-orange-900">JobMatch</h1>
+            <p className="text-xs font-medium uppercase tracking-[0.22em] text-slate-500">Client Portal</p>
           </div>
         </div>
-        
-        {/* Mobile Actions */}
-        <div className="flex items-center space-x-3">
-          {/* Messages */}
-          <button 
-            onClick={() => setShowMessagesModal(true)}
-            className="relative p-2 text-gray-600 hover:text-orange-600 transition"
+
+        <nav className="flex-1 space-y-1">
+          <button className="flex w-full items-center gap-3 rounded-xl border-r-4 border-orange-800 bg-orange-50/60 px-4 py-3 font-bold text-orange-900">
+            <Home className="h-5 w-5" />
+            <span>Dashboard</span>
+          </button>
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-slate-500 transition hover:bg-slate-200/50 hover:text-orange-700"
           >
-            <MessageSquare className="h-6 w-6" />
+            <PlusCircle className="h-5 w-5" />
+            <span>Post a Job</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('jobs')}
+            className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-slate-500 transition hover:bg-slate-200/50 hover:text-orange-700"
+          >
+            <Briefcase className="h-5 w-5" />
+            <span>Jobs & Applications</span>
+          </button>
+          <button
+            onClick={() => setShowMessagesModal(true)}
+            className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-slate-500 transition hover:bg-slate-200/50 hover:text-orange-700"
+          >
+            <MessageSquare className="h-5 w-5" />
+            <span className="flex-1">Messages</span>
             {unreadMessageCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+              <span className="rounded-full bg-red-500 px-2 py-0.5 text-xs font-bold text-white">
                 {unreadMessageCount > 99 ? '99+' : unreadMessageCount}
               </span>
             )}
           </button>
-          
-          {/* Notifications */}
-          <div className="relative">
-            <NotificationDropdown />
-          </div>
-          
-          {/* Profile - mobile header */}
-          <div className="relative" ref={dropdownRef}>
+          <button
+            onClick={() => setShowProfileModal(true)}
+            className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-slate-500 transition hover:bg-slate-200/50 hover:text-orange-700"
+          >
+            <Settings className="h-5 w-5" />
+            <span>Settings</span>
+          </button>
+        </nav>
+
+        <div className="mt-auto space-y-6">
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-[#944a00] to-[#e67e22] px-4 py-4 font-bold text-white shadow-lg shadow-orange-500/20 transition active:scale-95"
+          >
+            <PlusCircle className="h-4 w-4" />
+            Post New Job
+          </button>
+          <div className="border-t border-slate-200/50 pt-6">
+            <button className="flex w-full items-center gap-3 px-4 py-2 text-slate-500 transition hover:text-orange-700">
+              <HelpCircle className="h-5 w-5" />
+              <span className="text-sm font-medium">Help Center</span>
+            </button>
             <button
-              onClick={() => setShowUserDropdown(prev => !prev)}
-              className="flex items-center"
+              onClick={handleLogout}
+              className="mt-2 flex w-full items-center gap-3 px-4 py-2 text-slate-500 transition hover:text-red-600"
             >
-              <div className="w-8 h-8 rounded-full bg-orange-600 text-white flex items-center justify-center font-semibold text-sm">
-                {user ? getInitials(user.email) : 'U'}
+              <LogOut className="h-5 w-5" />
+              <span className="text-sm font-medium">Logout</span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      
+      {/* Client Main */}
+      <main className="min-h-screen flex-1 md:ml-64">
+        <header className="sticky top-0 z-40 flex items-center justify-between gap-4 bg-white/70 px-4 py-4 shadow-sm backdrop-blur-md sm:px-6 lg:px-8">
+          <div className="relative w-full max-w-md flex-1">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search jobs or applications..."
+              className="w-full rounded-xl border-none bg-slate-200/70 py-2.5 pl-10 pr-4 text-sm text-slate-900 placeholder:text-slate-500 focus:ring-2 focus:ring-orange-200"
+            />
+          </div>
+          <div className="flex items-center gap-4 sm:gap-6">
+            <div className="relative">
+              <NotificationDropdown />
+            </div>
+            <button
+              onClick={() => setShowMessagesModal(true)}
+              className="text-slate-600 transition hover:text-orange-800"
+            >
+              <MessageSquare className="h-5 w-5" />
+            </button>
+            <div className="hidden h-8 w-px bg-slate-200 sm:block" />
+            <button
+              onClick={() => setShowProfileModal(true)}
+              className="flex items-center gap-3"
+            >
+              <div className="hidden text-right sm:block">
+                <p className="text-sm font-bold text-slate-900">{workerDisplayName}</p>
+                <p className="text-xs font-medium text-slate-500">Client Portal</p>
+              </div>
+              <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-orange-200 bg-orange-600 text-sm font-semibold text-white">
+                {user?.email ? getInitials(user.email) : 'C'}
               </div>
             </button>
-
-            {/* Dropdown Menu */}
-            {showUserDropdown && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
-                <div className="px-4 py-2 border-b border-gray-100">
-                  <p className="text-sm font-medium text-gray-900 truncate">{user?.email}</p>
-                  <p className="text-xs text-gray-500">{user?.role}</p>
-                </div>
-                <button
-                  onClick={() => { setShowProfileModal(true); setShowUserDropdown(false); }}
-                  className="flex items-center w-full px-4 py-2 text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition"
-                >
-                  <User className="h-4 w-4 mr-2" />
-                  Profile
-                </button>
-                <div className="border-t border-gray-100 mt-1 pt-1">
-                  <button
-                    onClick={handleLogout}
-                    className="flex items-center w-full px-4 py-2 text-red-600 hover:bg-red-50 transition"
-                  >
-                    <LogOut className="h-4 w-4 mr-2" />
-                    Logout
-                  </button>
-                </div>
-              </div>
-            )}
           </div>
-          
-          {/* Mobile Menu Button */}
-          <button
-            onClick={() => setIsExpanded(true)}
-            className="p-2 text-gray-600 hover:text-orange-600 transition"
-          >
-            <Menu className="h-6 w-6" />
-          </button>
-        </div>
-      </div>
-      
-      <Sidebar 
-        userRole={user?.role || ''} 
-        activeTab={activeTab} 
-        setActiveTab={(tab: string) => setActiveTab(tab as 'dashboard' | 'overview' | 'jobs' | 'messages' | 'profile')}
-        isExpanded={isExpanded}
-        setIsExpanded={setIsExpanded}
-        setShowApplicationsModal={setShowApplicationsModal}
-        setShowMessagesModal={setShowMessagesModal}
-        setShowProfileModal={setShowProfileModal}
-      />
-      
-      {/* Main Content */}
-      <div className="flex-1 p-4 md:p-8">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-6 md:mb-8">
-          <div className="mb-4 md:mb-0">
-            <h1 className="text-xl md:text-2xl font-bold text-gray-900">
-              {user?.role === 'CLIENT' ? 'Client Dashboard' : 'Worker Dashboard'}
-            </h1>
-            <p className="text-sm md:text-base text-gray-600">{new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
-          </div>
-          {/* Desktop User Actions - Hidden on Mobile */}
-          <div className="hidden md:flex items-center gap-4">
-            {/* User Actions */}
-            <div className="flex items-center gap-3 mr-6">
-              {/* Messages */}
-              <div className="relative">
+        </header>
+
+        <div className="mx-auto max-w-7xl space-y-10 p-4 sm:p-6 lg:p-8">
+          {/* Welcome */}
+          <section className="space-y-1">
+            <h2 className="text-4xl font-extrabold tracking-tight text-slate-950">
+              Welcome back, {workerDisplayName}.
+            </h2>
+            <p className="text-lg text-slate-500">
+              You have {clientOpenJobs} open {clientOpenJobs === 1 ? 'job' : 'jobs'} and {totalAppsReceived} total {totalAppsReceived === 1 ? 'application' : 'applications'} received.
+            </p>
+          </section>
+
+          {/* Stats Cards */}
+          <section className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="rounded-xl border-l-4 border-[#944a00] bg-white p-6 shadow-sm transition hover:-translate-y-1">
+              <div className="mb-4 flex items-start justify-between">
+                <div className="rounded-lg bg-[#ffdcc5] p-2 text-[#944a00]">
+                  <Briefcase className="h-5 w-5" />
+                </div>
+                <span className="rounded-full bg-[#ffdcc5] px-2 py-1 text-xs font-bold text-[#944a00]">Total</span>
+              </div>
+              <p className="text-sm font-medium text-slate-500">Jobs Posted</p>
+              <h3 className="mt-1 text-3xl font-black text-slate-950">{String(jobs.length).padStart(2, '0')}</h3>
+            </div>
+
+            <div className="rounded-xl border-l-4 border-[#4e6073] bg-white p-6 shadow-sm transition hover:-translate-y-1">
+              <div className="mb-4 rounded-lg bg-[#d1e4fb] p-2 text-[#4e6073] w-fit">
+                <Users className="h-5 w-5" />
+              </div>
+              <p className="text-sm font-medium text-slate-500">Applications Received</p>
+              <h3 className="mt-1 text-3xl font-black text-slate-950">{String(totalAppsReceived).padStart(2, '0')}</h3>
+            </div>
+
+            <div className="rounded-xl border-l-4 border-[#00658f] bg-white p-6 shadow-sm transition hover:-translate-y-1">
+              <div className="mb-4 flex items-start justify-between">
+                <div className="rounded-lg bg-[#c7e7ff] p-2 text-[#00658f]">
+                  <BarChart3 className="h-5 w-5" />
+                </div>
+                <span className="rounded-full bg-[#c7e7ff] px-2 py-1 text-xs font-bold text-[#00658f]">Active</span>
+              </div>
+              <p className="text-sm font-medium text-slate-500">In Progress</p>
+              <h3 className="mt-1 text-3xl font-black text-slate-950">{String(clientInProgressJobs).padStart(2, '0')}</h3>
+            </div>
+
+            <div className="rounded-xl border-l-4 border-[#e67e22] bg-white p-6 shadow-sm transition hover:-translate-y-1">
+              <div className="mb-4 rounded-lg bg-orange-100 p-2 text-[#e67e22] w-fit">
+                <CheckCircle2 className="h-5 w-5" />
+              </div>
+              <p className="text-sm font-medium text-slate-500">Completed Jobs</p>
+              <h3 className="mt-1 text-3xl font-black text-slate-950">{String(clientCompletedJobs).padStart(2, '0')}</h3>
+            </div>
+          </section>
+
+          {/* Main grid */}
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
+            {/* Recent Jobs */}
+            <section className="space-y-6 lg:col-span-8">
+              <div className="flex items-end justify-between gap-4">
+                <h3 className="text-3xl font-bold tracking-tight text-slate-950">Recent Jobs</h3>
                 <button
-                  onClick={() => setShowMessagesModal(true)}
-                  className="relative text-gray-700 hover:text-orange-600 transition p-2 rounded-lg hover:bg-orange-50"
+                  onClick={() => setActiveTab('jobs')}
+                  className="text-sm font-bold text-[#944a00] transition hover:underline"
                 >
-                  <MessageSquare className="h-5 w-5" />
-                  {unreadMessageCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                      {unreadMessageCount > 99 ? '99+' : unreadMessageCount}
-                    </span>
-                  )}
+                  View All Jobs
                 </button>
               </div>
-
-              {/* Notifications */}
-              <div className="relative">
-                <NotificationDropdown />
-              </div>
-
-              {/* Profile */}
-              <div className="relative" ref={dropdownRef}>
-                <button
-                  onClick={() => setShowUserDropdown(prev => !prev)}
-                  className="flex items-center"
-                >
-                  <div className="w-9 h-9 rounded-full bg-orange-600 text-white flex items-center justify-center font-semibold text-sm">
-                    {user ? getInitials(user.email) : 'U'}
-                  </div>
-                </button>
-
-                {/* Dropdown Menu */}
-                {showUserDropdown && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
-                    <div className="px-4 py-2 border-b border-gray-100">
-                      <p className="text-sm font-medium text-gray-900 truncate">{user?.email}</p>
-                      <p className="text-xs text-gray-500">{user?.role}</p>
-                    </div>
+              <div className="overflow-hidden rounded-xl bg-white shadow-sm">
+                {recentClientJobs.length === 0 ? (
+                  <div className="p-10 text-center">
+                    <Briefcase className="mx-auto mb-4 h-12 w-12 text-slate-300" />
+                    <p className="text-slate-500">No jobs posted yet.</p>
                     <button
-                      onClick={() => { setShowProfileModal(true); setShowUserDropdown(false); }}
-                      className="flex items-center w-full px-4 py-2 text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition"
+                      onClick={() => setShowCreateModal(true)}
+                      className="mt-4 inline-flex items-center rounded-xl bg-[#944a00] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#7a3d00]"
                     >
-                      <User className="h-4 w-4 mr-2" />
-                      Profile
+                      Post Your First Job
                     </button>
-                    <div className="border-t border-gray-100 mt-1 pt-1">
+                  </div>
+                ) : (
+                  <div className="divide-y divide-slate-100">
+                    {recentClientJobs.map((job) => (
                       <button
-                        onClick={handleLogout}
-                        className="flex items-center w-full px-4 py-2 text-red-600 hover:bg-red-50 transition"
+                        key={job.id}
+                        onClick={() => handleJobClick(job)}
+                        className="flex w-full flex-col gap-4 p-6 text-left transition hover:bg-slate-50 md:flex-row md:items-center md:justify-between"
                       >
-                        <LogOut className="h-4 w-4 mr-2" />
-                        Logout
+                        <div className="flex items-center gap-4">
+                          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100 text-sm font-bold text-slate-600">
+                            {job.title?.charAt(0).toUpperCase() || 'J'}
+                          </div>
+                          <div>
+                            <h4 className="text-lg font-bold leading-tight text-slate-950">{job.title}</h4>
+                            <p className="text-xs font-medium text-slate-500">
+                              Posted {new Date(job.createdAt).toLocaleDateString()} • {job._count?.applications || 0} application{(job._count?.applications || 0) !== 1 ? 's' : ''}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between gap-6 md:justify-end">
+                          <div className="text-right">
+                            <p className="text-sm font-bold text-slate-950">${job.budget?.toLocaleString()}</p>
+                            <p className="text-[10px] font-medium uppercase tracking-[0.16em] text-slate-400">Budget</p>
+                          </div>
+                          <StatusBadge status={job.status} />
+                          <MoreHorizontal className="h-5 w-5 text-slate-300" />
+                        </div>
                       </button>
-                    </div>
+                    ))}
                   </div>
                 )}
               </div>
-            </div>
+            </section>
 
-            {/* Action Buttons */}
-            {user?.role === 'CLIENT' ? (
-              <button
-                onClick={() => setShowCreateModal(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition"
-              >
-                <PlusCircle className="h-5 w-5" />
-                Create Job
-              </button>
-            ) : (
-              <Link 
-                to="/jobs"
-                className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition"
-              >
-                <PlusCircle className="h-5 w-5" />
-                Find Jobs
-              </Link>
-            )}
-            <div className="flex items-center gap-2 text-sm text-gray-600">
-              <Calendar className="h-4 w-4" />
-              {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - {new Date(Date.now() + 7*24*60*60*1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-            </div>
-          </div>
-        </div>
+            {/* Job Snapshot Sidebar */}
+            <aside className="space-y-8 lg:col-span-4">
+              <div className="space-y-4 rounded-xl bg-white p-6 shadow-sm">
+                <h4 className="text-lg font-bold text-slate-950">Job Snapshot</h4>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-slate-500">Open</span>
+                    <span className="text-sm font-bold text-slate-950">{clientOpenJobs}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-slate-500">In Progress</span>
+                    <span className="text-sm font-bold text-slate-950">{clientInProgressJobs}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-slate-500">Completed</span>
+                    <span className="text-sm font-bold text-slate-950">{clientCompletedJobs}</span>
+                  </div>
+                  <div className="h-px bg-slate-100" />
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-slate-950">Total Jobs</span>
+                    <span className="text-xl font-black text-[#944a00]">{jobs.length}</span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setActiveTab('jobs')}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-100 py-3 font-bold text-slate-900 transition hover:bg-slate-200"
+                >
+                  <Eye className="h-4 w-4" />
+                  View All Jobs
+                </button>
+              </div>
 
-        {user?.role === 'CLIENT' ? (
-          <>
-            {/* Client Dashboard */}
-            {/* Tabs */}
-            <div className="mb-6">
-              <div className="border-b border-gray-200">
-                <nav className="flex space-x-8">
-                  <button
-                    onClick={() => setActiveTab('overview')}
-                    className={`py-4 px-1 border-b-2 font-medium text-sm transition ${
-                      activeTab === 'overview'
-                        ? 'border-primary-600 text-primary-600'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                    }`}
-                  >
-                    Overview
-                  </button>
+              <div className="relative overflow-hidden rounded-xl bg-[#f2f4f6] p-8">
+                <div className="relative z-10">
+                  <h4 className="mb-4 text-lg font-bold text-slate-950">Applications Received</h4>
+                  <div className="mb-2 text-5xl font-black text-[#944a00]">{String(totalAppsReceived).padStart(2, '0')}</div>
+                  <p className="mb-6 text-sm text-slate-600">Total across all your posted jobs.</p>
                   <button
                     onClick={() => setActiveTab('jobs')}
-                    className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition ${
-                      activeTab === 'jobs'
-                        ? 'border-primary-600 text-primary-600'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                    }`}
+                    className="w-full rounded-xl border-2 border-[#944a00] py-3 font-bold text-[#944a00] transition hover:bg-[#944a00] hover:text-white"
                   >
-                    <Briefcase className="h-4 w-4" />
-                    Jobs & Applications
-                    {jobs.reduce((sum, j) => sum + (j._count?.applications || 0), 0) > 0 && (
-                      <span className="bg-primary-100 text-primary-700 px-2 py-0.5 rounded-full text-xs">
-                        {jobs.reduce((sum, j) => sum + (j._count?.applications || 0), 0)}
-                      </span>
-                    )}
+                    Review Applications
                   </button>
-                </nav>
+                </div>
+                <div className="absolute -bottom-12 -right-12 h-48 w-48 rounded-full bg-[#944a00]/5 blur-3xl" />
               </div>
-            </div>
+            </aside>
+          </div>
 
-            {activeTab === 'overview' && (
-              <>
-                {/* Statistics Cards */}
-                <div className="mb-8">
-                  <h2 className="text-lg font-semibold text-gray-900 mb-4">Statistics</h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <Briefcase className="h-5 w-5 text-gray-500" />
-                          <span className="text-sm text-gray-600">Jobs Posted</span>
-                        </div>
-                        <span className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded">Total</span>
-                      </div>
-                      <div className="flex items-baseline gap-2">
-                        <span className="text-2xl font-bold text-gray-900">{String(stats.total).padStart(2, '0')}</span>
-                        <span className="text-sm text-green-600">Active</span>
-                      </div>
-                    </div>
-                    
-                    <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <BarChart3 className="h-5 w-5 text-gray-500" />
-                          <span className="text-sm text-gray-600">Applications</span>
-                        </div>
-                        <span className="text-xs px-2 py-1 bg-amber-100 text-amber-700 rounded">Received</span>
-                      </div>
-                      <div className="flex items-baseline gap-2">
-                        <span className="text-2xl font-bold text-gray-900">{String(jobs.reduce((sum, j) => sum + (j._count?.applications || 0), 0)).padStart(2, '0')}</span>
-                        <span className="text-sm text-gray-600">Total</span>
-                      </div>
-                    </div>
-
-                    <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <Users className="h-5 w-5 text-orange-500" />
-                          <span className="text-sm text-gray-600">In Progress</span>
-                        </div>
-                      </div>
-                      <div className="flex items-baseline gap-2">
-                        <span className="text-2xl font-bold text-gray-900">{String(stats.inProgress).padStart(2, '0')}</span>
-                      </div>
-                    </div>
-
-                    <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <BarChart3 className="h-5 w-5 text-gray-500" />
-                          <span className="text-sm text-gray-600">Completed</span>
-                        </div>
-                        <span className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded">Success</span>
-                      </div>
-                      <div className="flex items-baseline gap-2">
-                        <span className="text-2xl font-bold text-gray-900">{String(stats.completed).padStart(2, '0')}</span>
-                        <span className="text-sm text-green-600">Done</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Recent Jobs Overview */}
-                <div>
-                  <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-lg font-semibold text-gray-900">Recent Jobs</h2>
-                    <button
-                      onClick={() => setActiveTab('jobs')}
-                      className="text-primary-600 hover:text-primary-700 text-sm font-medium"
-                    >
-                      View All →
-                    </button>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {jobs.slice(0, 6).map((job) => (
-                      <div key={job.id} className="bg-white rounded-lg p-6 shadow-sm border border-gray-200 hover:shadow-md transition cursor-pointer" onClick={() => handleJobClick(job)}>
-                        <div className="flex justify-between items-start mb-4">
-                          <div>
-                            <h3 className="font-semibold text-gray-900 mb-1">{job.title}</h3>
-                            <p className="text-sm text-gray-600">Created {new Date(job.createdAt).toLocaleDateString()}</p>
-                          </div>
-                          <StatusBadge status={job.status} />
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <div className="flex justify-between">
-                            <span className="text-sm text-gray-600">Budget</span>
-                            <span className="text-sm font-medium">${job.budget}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-sm text-gray-600">Applications</span>
-                            <span className="text-sm font-medium">{job._count?.applications || 0}</span>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </>
-            )}
-
-            {activeTab === 'jobs' && (
-              <div>
-                <h2 className="text-lg font-semibold text-gray-900 mb-6">Jobs & Applications Management</h2>
-
-                {jobs.length === 0 ? (
-                  <div className="text-center py-12">
-                    <Briefcase className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                    <p className="text-gray-500 mb-4">No jobs posted yet</p>
-                    <button
-                      onClick={() => setShowCreateModal(true)}
-                      className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition"
-                    >
-                      Create Your First Job
-                    </button>
-                  </div>
-                ) : (() => {
-                  const totalJobPages = Math.ceil(jobs.length / JOBS_PER_PAGE);
-                  const pagedJobs = jobs.slice((jobsPage - 1) * JOBS_PER_PAGE, jobsPage * JOBS_PER_PAGE);
-                  return (
-                    <>
-                      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-                        <div className="overflow-x-auto">
-                          <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50">
-                              <tr>
-                                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">#</th>
-                                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Job Title</th>
-                                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Tags</th>
-                                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Budget</th>
-                                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-                                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Applications</th>
-                                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Created</th>
-                                <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Action</th>
-                              </tr>
-                            </thead>
-                            <tbody className="bg-white divide-y divide-gray-100">
-                              {pagedJobs.map((job, index) => (
-                                <tr
-                                  key={job.id}
-                                  className="hover:bg-orange-50 transition-colors cursor-pointer"
-                                  onClick={() => handleJobClick(job)}
-                                >
-                                  <td className="px-6 py-4 text-sm text-gray-400">{(jobsPage - 1) * JOBS_PER_PAGE + index + 1}</td>
-                                  <td className="px-6 py-4">
-                                    <p className="text-sm font-medium text-gray-900">{job.title}</p>
-                                    <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">{job.description}</p>
-                                  </td>
-                                  <td className="px-6 py-4">
-                                    <div className="flex flex-wrap gap-1">
-                                      {(job.tags ?? []).slice(0, 3).map((t) => (
-                                        <span key={t.id} className="inline-block px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full">
-                                          {t.tag}
-                                        </span>
-                                      ))}
-                                    </div>
-                                  </td>
-                                  <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                                    ${job.budget.toLocaleString()}
-                                  </td>
-                                  <td className="px-6 py-4">
-                                    <StatusBadge status={job.status} />
-                                  </td>
-                                  <td className="px-6 py-4">
-                                    <span className={`text-sm font-semibold ${(job._count?.applications || 0) > 0 ? 'text-primary-600' : 'text-gray-400'}`}>
-                                      {job._count?.applications || 0}
-                                    </span>
-                                  </td>
-                                  <td className="px-6 py-4 text-sm text-gray-500">
-                                    {new Date(job.createdAt).toLocaleDateString()}
-                                  </td>
-                                  <td className="px-6 py-4 text-right">
-                                    <button
-                                      onClick={(e) => { e.stopPropagation(); handleJobClick(job); }}
-                                      className="inline-flex items-center gap-1 text-xs text-orange-600 hover:text-orange-800 font-medium"
-                                    >
-                                      <Eye className="h-4 w-4" />
-                                      View
-                                    </button>
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
-
-                      {/* Jobs Pagination */}
-                      {totalJobPages > 1 && (
-                        <div className="flex items-center justify-between mt-4 px-1">
-                          <p className="text-sm text-gray-500">
-                            Showing {(jobsPage - 1) * JOBS_PER_PAGE + 1}–{Math.min(jobsPage * JOBS_PER_PAGE, jobs.length)} of {jobs.length} jobs
-                          </p>
-                          <div className="flex items-center gap-1">
-                            <button
-                              onClick={() => setJobsPage(p => Math.max(1, p - 1))}
-                              disabled={jobsPage === 1}
-                              className="px-3 py-1.5 rounded-lg text-sm font-medium border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
-                            >
-                              ← Prev
-                            </button>
-                            {Array.from({ length: totalJobPages }, (_, i) => i + 1)
-                              .filter(p => p === 1 || p === totalJobPages || Math.abs(p - jobsPage) <= 1)
-                              .reduce<(number | '...')[]>((acc, p, idx, arr) => {
-                                if (idx > 0 && p - (arr[idx - 1] as number) > 1) acc.push('...');
-                                acc.push(p);
-                                return acc;
-                              }, [])
-                              .map((item, idx) =>
-                                item === '...' ? (
-                                  <span key={`ellipsis-${idx}`} className="px-2 text-gray-400 text-sm">…</span>
-                                ) : (
-                                  <button
-                                    key={item}
-                                    onClick={() => setJobsPage(item as number)}
-                                    className={`w-8 h-8 rounded-lg text-sm font-medium transition ${
-                                      jobsPage === item
-                                        ? 'bg-amber-400 text-white'
-                                        : 'border border-gray-200 text-gray-600 hover:bg-gray-50'
-                                    }`}
-                                  >
-                                    {item}
-                                  </button>
-                                )
-                              )}
-                            <button
-                              onClick={() => setJobsPage(p => Math.min(totalJobPages, p + 1))}
-                              disabled={jobsPage === totalJobPages}
-                              className="px-3 py-1.5 rounded-lg text-sm font-medium border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
-                            >
-                              Next →
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                    </>
-                  );
-                })()}
+          {/* All Jobs Table */}
+          {activeTab === 'jobs' && (
+            <section className="space-y-6">
+              <div className="flex items-end justify-between gap-4">
+                <h3 className="text-3xl font-bold tracking-tight text-slate-950">Jobs & Applications</h3>
+                <button
+                  onClick={() => setShowCreateModal(true)}
+                  className="flex items-center gap-2 rounded-xl bg-gradient-to-br from-[#944a00] to-[#e67e22] px-4 py-2 text-sm font-bold text-white shadow-lg shadow-orange-500/20 transition active:scale-95"
+                >
+                  <PlusCircle className="h-4 w-4" />
+                  Post New Job
+                </button>
               </div>
-            )}
-          </>
-        ) : (
-          <>
-            {/* Worker Dashboard - keep existing implementation */}
-            {/* Statistics Cards */}
-            <div className="mb-8">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Statistics</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <Briefcase className="h-5 w-5 text-gray-500" />
-                      <span className="text-sm text-gray-600">Applications</span>
-                    </div>
-                    <span className="text-xs px-2 py-1 bg-amber-100 text-amber-700 rounded">Total</span>
-                  </div>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-2xl font-bold text-gray-900">{String(stats.total).padStart(2, '0')}</span>
-                    <span className="text-sm text-gray-600">Submitted</span>
-                  </div>
-                </div>
-                
-                <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <Users className="h-5 w-5 text-yellow-500" />
-                      <span className="text-sm text-gray-600">Pending</span>
-                    </div>
-                  </div>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-2xl font-bold text-gray-900">{String(stats.pending).padStart(2, '0')}</span>
-                    <span className="text-sm text-yellow-600">Waiting</span>
-                  </div>
-                </div>
 
-                <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <BarChart3 className="h-5 w-5 text-green-500" />
-                      <span className="text-sm text-gray-600">Matched</span>
-                    </div>
-                    <span className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded">Active</span>
-                  </div>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-2xl font-bold text-gray-900">{String(stats.matched).padStart(2, '0')}</span>
-                    <span className="text-sm text-green-600">Success</span>
-                  </div>
-                </div>
-
-                <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <MessageSquare className="h-5 w-5 text-blue-500" />
-                      <span className="text-sm text-gray-600">In Progress</span>
-                    </div>
-                    <span className="text-xs px-2 py-1 bg-amber-100 text-amber-700 rounded">Working</span>
-                  </div>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-2xl font-bold text-gray-900">{String(stats.inProgress).padStart(2, '0')}</span>
-                    <span className="text-sm text-blue-600">Active</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Recent Applications */}
-            <div>
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-lg font-semibold text-gray-900">My Applications</h2>
-                <Link to="/applications" className="text-primary-600 hover:text-primary-700 text-sm font-medium">
-                  View All →
-                </Link>
-              </div>
-              
-              {applications.length === 0 ? (
-                <div className="text-center py-12">
-                  <Users className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                  <p className="text-gray-500 mb-4">No applications yet</p>
-                  <Link
-                    to="/jobs"
-                    className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition"
-                  >
-                    Browse Jobs
-                  </Link>
+              {jobs.length === 0 ? (
+                <div className="flex flex-col items-center rounded-xl bg-white p-10 shadow-sm">
+                  <Briefcase className="mb-4 h-12 w-12 text-slate-300" />
+                  <p className="text-slate-500">No jobs posted yet.</p>
                 </div>
               ) : (() => {
-                const totalAppPages = Math.ceil(applications.length / APPS_PER_PAGE);
-                const pagedApps = applications.slice((appsPage - 1) * APPS_PER_PAGE, appsPage * APPS_PER_PAGE);
+                const totalJobPages = Math.ceil(jobs.length / JOBS_PER_PAGE);
+                const pagedJobs = jobs.slice((jobsPage - 1) * JOBS_PER_PAGE, jobsPage * JOBS_PER_PAGE);
                 return (
                   <>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {pagedApps.map((app) => (
-                        <div key={app.id} className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-                          <div className="flex justify-between items-start mb-4">
-                            <div>
-                              <h3 className="font-semibold text-gray-900 mb-1">{app.job?.title}</h3>
-                              <p className="text-sm text-gray-600">Applied {new Date(app.createdAt).toLocaleDateString()}</p>
-                            </div>
-                            <StatusBadge status={app.status} />
-                          </div>
-                          
-                          <div className="space-y-2">
-                            <div className="flex justify-between">
-                              <span className="text-sm text-gray-600">Budget</span>
-                              <span className="text-sm font-medium">${app.job?.budget.toLocaleString()}</span>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
+                    <div className="overflow-hidden rounded-xl bg-white shadow-sm">
+                      <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-slate-100">
+                          <thead className="bg-slate-50">
+                            <tr>
+                              <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">#</th>
+                              <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Job Title</th>
+                              <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Tags</th>
+                              <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Budget</th>
+                              <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
+                              <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Applications</th>
+                              <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Created</th>
+                              <th className="px-6 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Action</th>
+                            </tr>
+                          </thead>
+                          <tbody className="bg-white divide-y divide-slate-100">
+                            {pagedJobs.map((job, index) => (
+                              <tr
+                                key={job.id}
+                                className="hover:bg-orange-50 transition-colors cursor-pointer"
+                                onClick={() => handleJobClick(job)}
+                              >
+                                <td className="px-6 py-4 text-sm text-slate-400">{(jobsPage - 1) * JOBS_PER_PAGE + index + 1}</td>
+                                <td className="px-6 py-4">
+                                  <p className="text-sm font-bold text-slate-950">{job.title}</p>
+                                  <p className="text-xs text-slate-400 mt-0.5 line-clamp-1">{job.description}</p>
+                                </td>
+                                <td className="px-6 py-4">
+                                  <div className="flex flex-wrap gap-1">
+                                    {(job.tags ?? []).slice(0, 3).map((t) => (
+                                      <span key={t.id} className="inline-block px-2 py-0.5 bg-slate-100 text-slate-600 text-xs rounded-full">
+                                        {t.tag}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </td>
+                                <td className="px-6 py-4 text-sm font-bold text-slate-950">
+                                  ${job.budget.toLocaleString()}
+                                </td>
+                                <td className="px-6 py-4">
+                                  <StatusBadge status={job.status} />
+                                </td>
+                                <td className="px-6 py-4">
+                                  <span className={`text-sm font-semibold ${(job._count?.applications || 0) > 0 ? 'text-[#944a00]' : 'text-slate-400'}`}>
+                                    {job._count?.applications || 0}
+                                  </span>
+                                </td>
+                                <td className="px-6 py-4 text-sm text-slate-500">
+                                  {new Date(job.createdAt).toLocaleDateString()}
+                                </td>
+                                <td className="px-6 py-4 text-right">
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); handleJobClick(job); }}
+                                    className="inline-flex items-center gap-1 text-xs text-[#944a00] hover:text-[#7a3d00] font-bold"
+                                  >
+                                    <Eye className="h-4 w-4" />
+                                    View
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
 
-                    {/* Applications Pagination */}
-                    {totalAppPages > 1 && (
-                      <div className="flex items-center justify-between mt-6 px-1">
-                        <p className="text-sm text-gray-500">
-                          Showing {(appsPage - 1) * APPS_PER_PAGE + 1}–{Math.min(appsPage * APPS_PER_PAGE, applications.length)} of {applications.length} applications
+                    {totalJobPages > 1 && (
+                      <div className="flex items-center justify-between mt-4 px-1">
+                        <p className="text-sm text-slate-500">
+                          Showing {(jobsPage - 1) * JOBS_PER_PAGE + 1}–{Math.min(jobsPage * JOBS_PER_PAGE, jobs.length)} of {jobs.length} jobs
                         </p>
                         <div className="flex items-center gap-1">
                           <button
-                            onClick={() => setAppsPage(p => Math.max(1, p - 1))}
-                            disabled={appsPage === 1}
-                            className="px-3 py-1.5 rounded-lg text-sm font-medium border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                            onClick={() => setJobsPage(p => Math.max(1, p - 1))}
+                            disabled={jobsPage === 1}
+                            className="px-3 py-1.5 rounded-lg text-sm font-medium border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
                           >
                             ← Prev
                           </button>
-                          {Array.from({ length: totalAppPages }, (_, i) => i + 1)
-                            .filter(p => p === 1 || p === totalAppPages || Math.abs(p - appsPage) <= 1)
+                          {Array.from({ length: totalJobPages }, (_, i) => i + 1)
+                            .filter(p => p === 1 || p === totalJobPages || Math.abs(p - jobsPage) <= 1)
                             .reduce<(number | '...')[]>((acc, p, idx, arr) => {
                               if (idx > 0 && p - (arr[idx - 1] as number) > 1) acc.push('...');
                               acc.push(p);
@@ -1936,15 +1868,15 @@ export const Dashboard: React.FC = () => {
                             }, [])
                             .map((item, idx) =>
                               item === '...' ? (
-                                <span key={`ellipsis-${idx}`} className="px-2 text-gray-400 text-sm">…</span>
+                                <span key={`ellipsis-${idx}`} className="px-2 text-slate-400 text-sm">…</span>
                               ) : (
                                 <button
                                   key={item}
-                                  onClick={() => setAppsPage(item as number)}
+                                  onClick={() => setJobsPage(item as number)}
                                   className={`w-8 h-8 rounded-lg text-sm font-medium transition ${
-                                    appsPage === item
-                                      ? 'bg-amber-400 text-white'
-                                      : 'border border-gray-200 text-gray-600 hover:bg-gray-50'
+                                    jobsPage === item
+                                      ? 'bg-[#e67e22] text-white'
+                                      : 'border border-slate-200 text-slate-600 hover:bg-slate-50'
                                   }`}
                                 >
                                   {item}
@@ -1952,9 +1884,9 @@ export const Dashboard: React.FC = () => {
                               )
                             )}
                           <button
-                            onClick={() => setAppsPage(p => Math.min(totalAppPages, p + 1))}
-                            disabled={appsPage === totalAppPages}
-                            className="px-3 py-1.5 rounded-lg text-sm font-medium border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                            onClick={() => setJobsPage(p => Math.min(totalJobPages, p + 1))}
+                            disabled={jobsPage === totalJobPages}
+                            className="px-3 py-1.5 rounded-lg text-sm font-medium border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
                           >
                             Next →
                           </button>
@@ -1964,10 +1896,10 @@ export const Dashboard: React.FC = () => {
                   </>
                 );
               })()}
-            </div>
-          </>
-        )}
-      </div>
+            </section>
+          )}
+        </div>
+      </main>
 
       {/* Modals */}
       {selectedJob && (

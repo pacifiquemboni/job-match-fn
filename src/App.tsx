@@ -8,7 +8,7 @@ import { Navbar } from './components/common/Navbar';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { Home } from './pages/Home';
 import { Login } from './pages/Login';
-import { Register } from './pages/Register';
+import { Register, RegisterClient } from './pages/Register';
 import { Jobs } from './pages/Jobs';
 import { JobDetails } from './pages/JobDetails';
 import { CreateJob } from './pages/CreateJob';
@@ -21,7 +21,10 @@ function AppContent() {
   const { user, isLoading } = useAuth();
   const location = useLocation();
   const isDashboard = location.pathname === '/dashboard';
-  const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
+  const isAuthPage =
+    location.pathname === '/login' ||
+    location.pathname === '/register' ||
+    location.pathname === '/register-client';
 
   if (isLoading) {
     return (
@@ -35,9 +38,10 @@ function AppContent() {
     <>
       {!isDashboard && !isAuthPage && <Navbar />}
       <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/login" element={!user ? <Login /> : <Navigate to="/" />} />
-        <Route path="/register" element={!user ? <Register /> : <Navigate to="/" />} />
+        <Route path="/" element={user?.role === 'CLIENT' ? <Navigate to="/dashboard" replace /> : <Home />} />
+        <Route path="/login" element={!user ? <Login /> : <Navigate to={user.role === 'CLIENT' ? '/dashboard' : '/'} replace />} />
+        <Route path="/register" element={!user ? <Register /> : <Navigate to={user.role === 'CLIENT' ? '/dashboard' : '/'} replace />} />
+        <Route path="/register-client" element={!user ? <RegisterClient /> : <Navigate to={user.role === 'CLIENT' ? '/dashboard' : '/'} replace />} />
         <Route path="/jobs" element={<Jobs />} />
         <Route path="/jobs/:id" element={<JobDetails />} />
         

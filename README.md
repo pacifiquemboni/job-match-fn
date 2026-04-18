@@ -78,19 +78,44 @@ job-matching-frontend/
 
 ## Pages & Roles
 
-| Page | Route | Access |
-|---|---|---|
-| Home | `/` | Public |
-| Browse Jobs | `/jobs` | Public |
-| Job Details | `/jobs/:id` | Public |
-| Login | `/login` | Guest only |
-| Register | `/register` | Guest only |
-| Dashboard | `/dashboard` | Authenticated |
-| Messages | `/messages` | Authenticated |
-| My Applications | `/applications` | WORKER |
-| Profile | `/profile` | Authenticated |
+| Page | Route | Access | Notes |
+|---|---|---|---|
+| Home | `/` | Public (WORKER) | CLIENTs are redirected to `/dashboard` |
+| Browse Jobs | `/jobs` | Public | Filter by tags, status, budget |
+| Job Details | `/jobs/:id` | Public | |
+| Login | `/login` | Guest only | Redirects to `/dashboard` (CLIENT) or `/` (WORKER) after login |
+| Register — Worker | `/register` | Guest only | Creates a `WORKER` account; redirects to `/` after sign-up |
+| Register — Client | `/register-client` | Guest only | Creates a `CLIENT` account; redirects to `/dashboard` after sign-up |
+| Dashboard | `/dashboard` | Authenticated | Role-aware: different UI for CLIENT vs WORKER |
+| Messages | `/messages` | Authenticated | |
+| My Applications | `/applications` | WORKER only | |
+| Create Job | `/create-job` | CLIENT only | |
+| Profile | `/profile` | Authenticated | |
 
-### Dashboard — CLIENT
+---
+
+## Registration Paths
+
+The platform provides **two separate registration routes**, one per role. Both share the same `RegisterPage` component but receive a `role` prop that customises the copy, side-panel messaging, button label, and post-sign-up redirect.
+
+```
+/register          →  role: WORKER  →  redirect: / (job board)
+/register-client   →  role: CLIENT  →  redirect: /dashboard
+```
+
+### Worker registration (`/register`)
+- Side panel headline: *"Find work that fits your skills."*
+- Button: **Sign Up as Worker**
+- After sign-up the user lands on the public job board (`/`) and can immediately start browsing and applying.
+
+### Client registration (`/register-client`)
+- Side panel headline: *"Hire faster with the right talent."*
+- Button: **Sign Up as Client**
+- After sign-up the user lands on `/dashboard` where they can post their first job straight away.
+
+Both forms collect **email** and **password** only; the `role` is encoded in the URL/component, not exposed as a dropdown. The Navbar hides on both registration pages (`/register`, `/register-client`) for a clean, centered layout.
+
+
 - Overview with job stats
 - **Jobs & Applications** tab — paginated table of posted jobs (10/page), view applicants, update status
 - Post new job modal

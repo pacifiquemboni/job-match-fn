@@ -2,6 +2,10 @@
 import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'axios';
 import toast from 'react-hot-toast';
 
+type AuthenticatedRequestConfig = InternalAxiosRequestConfig & {
+  _tokenUsed?: string;
+};
+
 const rawApiUrl = import.meta.env.VITE_API_URL?.trim();
 
 const apiBaseUrl = rawApiUrl
@@ -24,6 +28,7 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    (config as AuthenticatedRequestConfig)._tokenUsed = token ?? undefined;
     return config;
   },
   (error) => {
@@ -39,7 +44,11 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    if (error.response?.status === 401) {
+    const currentToken = localStorage.getItem('token');
+    const requestToken = (error.config as AuthenticatedRequestConfig | undefined)?._tokenUsed;
+    const isActiveSessionRequest = Boolean(currentToken) && requestToken === currentToken;
+
+    if (error.response?.status === 401 && isActiveSessionRequest) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       window.location.href = '/login';

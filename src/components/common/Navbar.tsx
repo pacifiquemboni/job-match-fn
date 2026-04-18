@@ -18,8 +18,8 @@ export const Navbar: React.FC = () => {
     navigate('/login');
   };
 
-  const getInitials = (email: string) => {
-    return email.charAt(0).toUpperCase();
+  const getInitials = (email?: string) => {
+    return email?.charAt(0).toUpperCase() ?? '?';
   };
 
   useEffect(() => {
@@ -49,12 +49,12 @@ export const Navbar: React.FC = () => {
   }, [socket, user]);
 
   return (
-    <nav className="bg-white shadow-md sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
-          <div className="flex items-center">
+    <nav className="sticky top-0 z-50 flex justify-center px-4 pt-3">
+      <div className="bg-white shadow-lg rounded-2xl w-full max-w-7xl px-6">
+        <div className="flex justify-between items-center h-28">
+          <div className="flex">
             <Link to="/" className="flex items-center space-x-2">
-              <Briefcase className="h-8 w-8 text-orange-600" />
+              <Briefcase className="h-8 w-8 text-amber-400" />
               <span className="font-bold text-xl text-gray-900">JobMatch</span>
             </Link>
           </div>
@@ -62,7 +62,7 @@ export const Navbar: React.FC = () => {
           <div className="flex items-center space-x-4">
             {user && (
               <>
-                <Link to="/messages" className="relative text-gray-700 hover:text-orange-600 transition">
+                <Link to="/messages" className="relative text-gray-700 transition hover:text-amber-500">
                   <MessageSquare className="h-5 w-5" />
                   {unreadMessageCount > 0 && (
                     <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
@@ -80,7 +80,7 @@ export const Navbar: React.FC = () => {
                   onMouseLeave={() => setShowDropdown(false)}
                 >
                   <button className="flex items-center space-x-2">
-                    <div className="w-9 h-9 rounded-full bg-orange-600 text-white flex items-center justify-center font-semibold text-sm">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-400 text-sm font-semibold text-white">
                       {getInitials(user.email)}
                     </div>
                   </button>
@@ -94,7 +94,7 @@ export const Navbar: React.FC = () => {
                       </div>
                       <Link
                         to="/dashboard"
-                        className="flex items-center px-4 py-2 text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition"
+                        className="flex items-center px-4 py-2 text-gray-700 transition hover:bg-amber-50 hover:text-amber-500"
                       >
                         <User className="h-4 w-4 mr-2" />
                         Dashboard
@@ -116,10 +116,10 @@ export const Navbar: React.FC = () => {
 
             {!user && (
               <>
-                <Link to="/login" className="text-gray-700 hover:text-orange-600">
+                <Link to="/login" className="text-gray-700 hover:text-amber-500">
                   Login
                 </Link>
-                <Link to="/register" className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg transition">
+                <Link to="/register" className="rounded-lg bg-amber-400 px-4 py-2 text-white transition hover:bg-amber-500">
                   Register
                 </Link>
               </>
