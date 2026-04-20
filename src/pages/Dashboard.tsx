@@ -998,6 +998,8 @@ export const Dashboard: React.FC = () => {
   const { socket } = useSocket();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+
+  // All hooks must be above any return
   const [jobs, setJobs] = useState<Job[]>([]);
   const [applications, setApplications] = useState<Application[]>([]);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'overview' | 'jobs' | 'messages' | 'profile'>('overview');
@@ -1011,7 +1013,7 @@ export const Dashboard: React.FC = () => {
   const [initialChatApplicationId, setInitialChatApplicationId] = useState<string | undefined>(undefined);
   const [, setLoadingApplications] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
-
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   // Pagination
   const JOBS_PER_PAGE = 10;
   const [jobsPage, setJobsPage] = useState(1);
@@ -1153,9 +1155,107 @@ export const Dashboard: React.FC = () => {
     })
     .slice(0, 3);
 
+  // Mobile sidebar state (must be outside any condition)
+  // (already declared above with other hooks)
+
+  // --- MAIN RENDER ---
+  if (loading) return <LoadingSpinner />;
+
   if (user?.role === 'WORKER') {
     return (
       <div className="min-h-screen bg-[#f7f9fb] md:flex">
+        {/* Mobile Hamburger Button */}
+        <button
+          className="fixed top-4 left-4 z-50 flex items-center justify-center rounded-lg bg-white p-2 shadow-md md:hidden"
+          onClick={() => setMobileSidebarOpen(true)}
+          aria-label="Open navigation menu"
+        >
+          <svg className="h-6 w-6 text-orange-900" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+
+        {/* Mobile Sidebar Drawer */}
+        {mobileSidebarOpen && (
+          <div className="fixed inset-0 z-40 flex md:hidden">
+            {/* Overlay */}
+            <div
+              className="fixed inset-0 bg-black bg-opacity-30"
+              onClick={() => setMobileSidebarOpen(false)}
+              aria-label="Close navigation menu"
+            />
+            {/* Drawer */}
+            <aside className="relative w-64 bg-white h-full shadow-xl flex flex-col p-6 animate-slide-in-left">
+              <button
+                className="absolute top-4 right-4 text-gray-400 hover:text-gray-700"
+                onClick={() => setMobileSidebarOpen(false)}
+                aria-label="Close navigation menu"
+              >
+                <X className="h-6 w-6" />
+              </button>
+              <div className="mb-10 flex items-center gap-3 px-2 mt-6">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#944a00] to-[#e67e22] text-white">
+                  <Briefcase className="h-5 w-5" />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-black tracking-tight text-orange-900">JobMatch</h1>
+                  <p className="text-xs font-medium uppercase tracking-[0.22em] text-slate-500">Worker Portal</p>
+                </div>
+              </div>
+              <nav className="flex-1 space-y-1">
+                <button className="flex w-full items-center gap-3 rounded-xl border-r-4 border-orange-800 bg-orange-50/60 px-4 py-3 font-bold text-orange-900">
+                  <Home className="h-5 w-5" />
+                  <span>Dashboard</span>
+                </button>
+                <button
+                  onClick={() => { setMobileSidebarOpen(false); navigate('/jobs'); }}
+                  className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-slate-500 transition hover:bg-slate-200/50 hover:text-orange-700"
+                >
+                  <Briefcase className="h-5 w-5" />
+                  <span>Jobs</span>
+                </button>
+                <button
+                  onClick={() => { setMobileSidebarOpen(false); setShowApplicationsModal(true); }}
+                  className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-slate-500 transition hover:bg-slate-200/50 hover:text-orange-700"
+                >
+                  <Users className="h-5 w-5" />
+                  <span>Applications</span>
+                </button>
+                <button
+                  onClick={() => { setMobileSidebarOpen(false); setShowProfileModal(true); }}
+                  className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-slate-500 transition hover:bg-slate-200/50 hover:text-orange-700"
+                >
+                  <Settings className="h-5 w-5" />
+                  <span>Settings</span>
+                </button>
+              </nav>
+              <div className="mt-auto space-y-6">
+                <Link
+                  to="/jobs"
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-[#944a00] to-[#e67e22] px-4 py-4 font-bold text-white shadow-lg shadow-orange-500/20 transition active:scale-95"
+                  onClick={() => setMobileSidebarOpen(false)}
+                >
+                  <Search className="h-4 w-4" />
+                  Find New Jobs
+                </Link>
+                <div className="border-t border-slate-200/50 pt-6">
+                  <button className="flex w-full items-center gap-3 px-4 py-2 text-slate-500 transition hover:text-orange-700">
+                    <HelpCircle className="h-5 w-5" />
+                    <span className="text-sm font-medium">Help Center</span>
+                  </button>
+                  <button
+                    onClick={() => { setMobileSidebarOpen(false); handleLogout(); }}
+                    className="mt-2 flex w-full items-center gap-3 px-4 py-2 text-slate-500 transition hover:text-red-600"
+                  >
+                    <LogOut className="h-5 w-5" />
+                    <span className="text-sm font-medium">Logout</span>
+                  </button>
+                </div>
+              </div>
+            </aside>
+          </div>
+        )}
+        {/* Desktop Sidebar */}
         <aside className="hidden md:flex md:fixed md:left-0 md:top-0 md:h-screen md:w-64 md:flex-col md:border-r md:border-slate-200/40 md:bg-slate-50 md:px-4 md:py-8">
           <div className="mb-10 flex items-center gap-3 px-2">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#944a00] to-[#e67e22] text-white">
